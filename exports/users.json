@@ -1,0 +1,18 @@
+[
+  {
+    "id": "410544b2-4001-4271-9855-fec4b6a6442a",
+    "name": "User",
+    "email": "user@nextmail.com",
+    "password": "$2b$10$lEASENMSle/Xy5caIGZpHux0ZYnoz40Y5BmNxqO6x6gfA9KG2Dvqe",
+    "openId": null,
+    "username": null,
+    "resetToken": null,
+    "resetTokenExpiry": null,
+    "loginMethod": null,
+    "role": "user",
+    "businessId": null,
+    "createdAt": "2025-11-06T12:59:07.605Z",
+    "updatedAt": "2025-11-06T12:59:07.645Z",
+    "lastSignedIn": "2025-11-06T12:59:07.685Z"
+  }
+]

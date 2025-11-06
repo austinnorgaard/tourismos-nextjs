@@ -3,8 +3,7 @@ import { trpc } from "@/lib/trpc";
 import { 
   Calendar, 
   DollarSign, 
-  Users, 
-  TrendingUp,
+  
   Clock,
   CheckCircle2
 } from "lucide-react";
@@ -38,7 +37,7 @@ export default function Dashboard() {
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold">Dashboard</h1>
-        <p className="text-muted-foreground">Welcome back to {business?.name}</p>
+  <p className="text-muted-foreground">Welcome back to {business?.name}</p>
       </div>
 
       {/* Metrics Grid */}
@@ -72,7 +71,7 @@ export default function Dashboard() {
       {/* Today's Bookings */}
       <Card>
         <CardHeader>
-          <CardTitle>Today's Bookings</CardTitle>
+          <CardTitle>Today&apos;s Bookings</CardTitle>
           <CardDescription>
             {todayBookings.length} booking{todayBookings.length !== 1 ? 's' : ''} scheduled for today
           </CardDescription>

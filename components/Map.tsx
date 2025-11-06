@@ -47,8 +47,19 @@ import { useEffect, useRef } from "react";
 
 declare global {
   interface Window {
-    google: any;
+    google: unknown;
   }
+}
+
+interface MapInstance {
+  setCenter: (c: { lat: number; lng: number }) => void;
+  setZoom: (z: number) => void;
+}
+
+interface GoogleWindow {
+  maps: {
+    Map: new (el: HTMLDivElement, opts: Record<string, unknown>) => MapInstance;
+  };
 }
 
 const API_KEY = process.env.NEXT_PUBLIC_FRONTEND_FORGE_API_KEY;
@@ -59,7 +70,7 @@ interface MapViewProps {
   center?: { lat: number; lng: number };
   zoom?: number;
   className?: string;
-  onMapReady?: (map: any) => void;
+  onMapReady?: (map: unknown) => void;
 }
 
 export function MapView({
@@ -69,7 +80,7 @@ export function MapView({
   onMapReady,
 }: MapViewProps) {
   const mapContainer = useRef<HTMLDivElement>(null);
-  const map = useRef<any>(null);
+  const map = useRef<MapInstance | null>(null);
 
   useEffect(() => {
     if (!window.google) {
@@ -88,12 +99,13 @@ export function MapView({
           script.textContent = scriptContent;
           document.head.appendChild(script);
           
-          const checkGoogle = setInterval(() => {
-            if (window.google && window.google.maps) {
-              clearInterval(checkGoogle);
-              initMap();
-            }
-          }, 100);
+              const checkGoogle = setInterval(() => {
+                const g = window.google as unknown as { maps?: unknown } | undefined;
+                if (g && g.maps) {
+                  clearInterval(checkGoogle);
+                  initMap();
+                }
+              }, 100);
           
           setTimeout(() => clearInterval(checkGoogle), 10000);
         })
@@ -105,7 +117,8 @@ export function MapView({
     function initMap() {
       if (!mapContainer.current || !window.google || map.current) return;
 
-      map.current = new window.google.maps.Map(mapContainer.current, {
+  const g = window.google as unknown as GoogleWindow;
+      map.current = new g.maps.Map(mapContainer.current as HTMLDivElement, {
         zoom,
         center,
         mapTypeControl: true,
@@ -116,17 +129,17 @@ export function MapView({
       });
 
       if (onMapReady) {
-        onMapReady(map.current);
+        onMapReady(map.current as unknown);
       }
     }
-  }, []);
+  }, [center, zoom, onMapReady]);
 
   useEffect(() => {
-    if (map.current) {
-      map.current.setCenter(center);
-      map.current.setZoom(zoom);
+  if (map.current) {
+  map.current.setCenter(center);
+  map.current.setZoom(zoom);
     }
-  }, [center, zoom]);
+  }, [center, zoom, onMapReady]);
 
   return <div ref={mapContainer} className={className} />;
 }

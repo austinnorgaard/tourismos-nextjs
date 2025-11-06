@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { APP_LOGO, APP_TITLE } from "@/const";
 import { useState } from "react";
-import { Link } from "wouter";
+import Link from 'next/link';
 import { toast } from "sonner";
 
 export default function ForgotPassword() {
@@ -31,7 +31,7 @@ export default function ForgotPassword() {
       } else {
         toast.error(data.error || "Failed to send reset link");
       }
-    } catch (error) {
+    } catch {
       toast.error("Network error. Please try again.");
     } finally {
       setLoading(false);
@@ -43,6 +43,7 @@ export default function ForgotPassword() {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           {APP_LOGO && (
+            // eslint-disable-next-line @next/next/no-img-element
             <img src={APP_LOGO} alt={APP_TITLE} className="h-12 mx-auto mb-4" />
           )}
           <h1 className="text-3xl font-bold text-slate-900">{APP_TITLE}</h1>
@@ -52,7 +53,7 @@ export default function ForgotPassword() {
           <CardHeader>
             <CardTitle>Forgot Password</CardTitle>
             <CardDescription>
-              Enter your email address and we'll send you a link to reset your password
+              Enter your email address and we&apos;ll send you a link to reset your password
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -60,7 +61,7 @@ export default function ForgotPassword() {
               <div className="space-y-4">
                 <div className="p-4 bg-green-50 border border-green-200 rounded-md">
                   <p className="text-sm text-green-800">
-                    If an account exists with that email, we've sent a password reset link.
+                    If an account exists with that email, we&apos;ve sent a password reset link.
                     Please check your inbox and spam folder.
                   </p>
                 </div>

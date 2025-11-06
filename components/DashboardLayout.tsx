@@ -19,12 +19,13 @@ import {
   SidebarTrigger,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { APP_LOGO, APP_TITLE, getLoginUrl } from "@/const";
+import { APP_TITLE } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
 import { LayoutDashboard, LogOut, PanelLeft, Users, Calendar, Package, Bot, Mail, BarChart3, Settings, Mountain, Globe, Crown, Plug } from "lucide-react";
 import { NotificationCenter } from "./NotificationCenter";
+"use client";
 import { CSSProperties, useEffect, useRef, useState } from "react";
-import { useLocation } from "wouter";
+import { usePathname, useRouter } from 'next/navigation';
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
 import { Button } from "./ui/button";
 
@@ -52,13 +53,25 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const [sidebarWidth, setSidebarWidth] = useState(() => {
-    const saved = localStorage.getItem(SIDEBAR_WIDTH_KEY);
-    return saved ? parseInt(saved, 10) : DEFAULT_WIDTH;
+    if (typeof window === 'undefined' || typeof window.localStorage === 'undefined') {
+      return DEFAULT_WIDTH;
+    }
+    try {
+      const saved = localStorage.getItem(SIDEBAR_WIDTH_KEY);
+      return saved ? parseInt(saved, 10) : DEFAULT_WIDTH;
+    } catch (e) {
+      return DEFAULT_WIDTH;
+    }
   });
   const { loading, user } = useAuth();
 
   useEffect(() => {
-    localStorage.setItem(SIDEBAR_WIDTH_KEY, sidebarWidth.toString());
+    if (typeof window === 'undefined' || typeof window.localStorage === 'undefined') return;
+    try {
+      localStorage.setItem(SIDEBAR_WIDTH_KEY, sidebarWidth.toString());
+    } catch (e) {
+      // ignore storage errors
+    }
   }, [sidebarWidth]);
 
   if (loading) {
@@ -87,7 +100,9 @@ export default function DashboardLayout({
           </div>
           <Button
             onClick={() => {
-              window.location.href = "/auth";
+              if (typeof window !== 'undefined') {
+                window.location.href = "/auth";
+              }
             }}
             size="lg"
             className="w-full shadow-lg hover:shadow-xl transition-all"
@@ -124,16 +139,18 @@ function DashboardLayoutContent({
   setSidebarWidth,
 }: DashboardLayoutContentProps) {
   const { user, logout } = useAuth();
-  const [location, setLocation] = useLocation();
+  const pathname = usePathname();
+  const router = useRouter();
   const { state, toggleSidebar } = useSidebar();
   const isCollapsed = state === "collapsed";
   const [isResizing, setIsResizing] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
-  const activeMenuItem = menuItems.find(item => item.path === location);
+  const activeMenuItem = menuItems.find(item => item.path === pathname);
   const isMobile = useIsMobile();
 
   useEffect(() => {
     if (isCollapsed) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setIsResizing(false);
     }
   }, [isCollapsed]);
@@ -210,12 +227,14 @@ function DashboardLayoutContent({
           <SidebarContent className="gap-0">
             <SidebarMenu className="px-2 py-1">
               {menuItems.map(item => {
-                const isActive = location === item.path;
+                const isActive = pathname === item.path;
                 return (
                   <SidebarMenuItem key={item.path}>
                     <SidebarMenuButton
                       isActive={isActive}
-                      onClick={() => setLocation(item.path)}
+                            onClick={() => {
+                              if (typeof window !== 'undefined' && router) router.push(item.path);
+                            }}
                       tooltip={item.label}
                       className={`h-10 transition-all font-normal`}
                     >
@@ -232,13 +251,13 @@ function DashboardLayoutContent({
               {user?.role === 'seller_admin' && (
                 <SidebarMenuItem>
                   <SidebarMenuButton
-                    isActive={location === '/seller-admin'}
-                    onClick={() => setLocation('/seller-admin')}
+                    isActive={pathname === '/seller-admin'}
+                    onClick={() => { if (typeof window !== 'undefined' && router) router.push('/seller-admin'); }}
                     tooltip="Seller Admin"
                     className="h-10 transition-all font-normal"
                   >
                     <Crown
-                      className={`h-4 w-4 ${location === '/seller-admin' ? "text-primary" : ""}`}
+                      className={`h-4 w-4 ${pathname === '/seller-admin' ? "text-primary" : ""}`}
                     />
                     <span>Seller Admin</span>
                   </SidebarMenuButton>

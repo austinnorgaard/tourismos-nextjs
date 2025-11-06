@@ -5,7 +5,8 @@ import { trpc } from "@/lib/trpc";
 import { Mail, MessageSquare, Sparkles, Copy, Check, Users, TrendingUp, Send, Eye, MousePointerClick } from "lucide-react";
 import { toast } from "sonner";
 import { useState } from "react";
-import { Streamdown } from "streamdown";
+import dynamic from 'next/dynamic';
+const Streamdown = dynamic(() => import('streamdown').then((m) => m.Streamdown), { ssr: false });
 
 export default function Marketing() {
   return (
@@ -346,6 +347,8 @@ function SocialPostGenerator() {
   const [generatedPost, setGeneratedPost] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
+  type SocialPlatform = 'facebook' | 'instagram' | 'twitter';
+
   const generatePostMutation = trpc.ai.generateSocialPost.useMutation({
     onSuccess: (data) => {
       setGeneratedPost(data.content);
@@ -360,9 +363,12 @@ function SocialPostGenerator() {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
 
+    const platformRaw = formData.get("platform");
+    const platform = (platformRaw ? String(platformRaw) : 'facebook') as SocialPlatform;
+
     generatePostMutation.mutate({
       topic: formData.get("topic") as string,
-      platform: formData.get("platform") as any,
+      platform,
     });
   };
 

@@ -1,14 +1,14 @@
-'use client';
+"use client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { AlertCircle, Home } from "lucide-react";
-import { useLocation } from "wouter";
+import { useRouter } from 'next/navigation';
 
 export default function NotFound() {
-  const [, setLocation] = useLocation();
+  const router = useRouter();
 
   const handleGoHome = () => {
-    setLocation("/");
+    if (typeof window !== 'undefined') router.push('/');
   };
 
   return (
@@ -29,7 +29,7 @@ export default function NotFound() {
           </h2>
 
           <p className="text-slate-600 mb-8 leading-relaxed">
-            Sorry, the page you are looking for doesn't exist.
+            Sorry, the page you are looking for doesn&apos;t exist.
             <br />
             It may have been moved or deleted.
           </p>

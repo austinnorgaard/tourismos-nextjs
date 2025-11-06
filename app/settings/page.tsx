@@ -2,16 +2,14 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { trpc } from "@/lib/trpc";
-import { Building2, Mail, Phone, Globe, MapPin, Shield, Link as LinkIcon, Unlink, Palette } from "lucide-react";
+import { Building2, Mail, Phone, Globe, MapPin, Palette } from "lucide-react";
+import { Shield, Link as LinkIcon, Unlink } from "lucide-react";
 import { toast } from "sonner";
 import { ImageUpload } from "@/components/ImageUpload";
 import { StripeConnectCard } from "@/components/StripeConnectCard";
 import { useState, useEffect } from "react";
-import { useAuth } from "@/_core/hooks/useAuth";
-import { useLocation } from "wouter";
 
 function OAuthAccountsCard() {
-  const { user } = useAuth();
   const { data: oauthAccounts, isLoading } = trpc.oauth.list.useQuery();
   const utils = trpc.useUtils();
 
@@ -27,10 +25,11 @@ function OAuthAccountsCard() {
 
   const handleLink = (provider: "google" | "microsoft") => {
     // Redirect to OAuth flow
-    window.location.href = `/api/auth/${provider}`;
+    // Use assign to avoid mutating the window.location object directly in a way ESLint flags
+    window.location.assign(`/api/auth/${provider}`);
   };
 
-  const handleUnlink = (provider: "google" | "microsoft" | "apple") => {
+  const handleUnlink = (provider: "google" | "microsoft") => {
     if (confirm(`Are you sure you want to unlink your ${provider} account?`)) {
       unlinkMutation.mutate({ provider });
     }
@@ -42,8 +41,6 @@ function OAuthAccountsCard() {
         return { name: "Google", color: "text-red-600" };
       case "microsoft":
         return { name: "Microsoft", color: "text-blue-600" };
-      case "apple":
-        return { name: "Apple", color: "text-gray-800" };
       default:
         return { name: provider, color: "text-gray-600" };
     }
@@ -159,8 +156,12 @@ export default function Settings() {
   // Update state when business data loads
   useEffect(() => {
     if (business) {
+      // Sync initial values from business into local state on mount
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setPrimaryColor(business.primaryColor || "#2563eb");
+       
       setSecondaryColor(business.secondaryColor || "#1e40af");
+       
       setTheme(business.theme || "light");
     }
   }, [business]);
@@ -181,7 +182,7 @@ export default function Settings() {
 
     updateBusinessMutation.mutate({
       name: formData.get("name") as string,
-      type: formData.get("type") as any,
+  type: formData.get("type") as "tour_operator" | "hotel" | "restaurant" | "activity_provider" | "rental" | "other",
       description: formData.get("description") as string,
       location: formData.get("location") as string,
       address: formData.get("address") as string,
@@ -397,6 +398,8 @@ export default function Settings() {
       {/* OAuth Account Linking - DISABLED due to gateway routing issues
       <OAuthAccountsCard />
       */}
+  {/* OAuth Account Linking */}
+  <OAuthAccountsCard />
 
       {/* Branding & Customization */}
       <Card>

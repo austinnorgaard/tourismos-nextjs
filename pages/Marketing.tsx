@@ -4,7 +4,8 @@ import { trpc } from "@/lib/trpc";
 import { Mail, MessageSquare, Sparkles, Copy, Check, Users, TrendingUp, Send, Eye, MousePointerClick } from "lucide-react";
 import { toast } from "sonner";
 import { useState } from "react";
-import { Streamdown } from "streamdown";
+import dynamic from 'next/dynamic';
+const Streamdown = dynamic(() => import('streamdown').then((m) => m.Streamdown), { ssr: false });
 
 export default function Marketing() {
   return (
@@ -361,7 +362,7 @@ function SocialPostGenerator() {
 
     generatePostMutation.mutate({
       topic: formData.get("topic") as string,
-      platform: formData.get("platform") as any,
+      platform: formData.get("platform") as "facebook" | "instagram" | "twitter",
     });
   };
 

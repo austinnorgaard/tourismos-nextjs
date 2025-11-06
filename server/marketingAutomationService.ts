@@ -172,31 +172,31 @@ export const DEFAULT_WORKFLOWS: Omit<MarketingWorkflow, 'id'>[] = [
 export async function executeWorkflowAction(
   action: WorkflowAction,
   context: {
-    businessId: number;
+    businessId?: number;
     customerId?: number;
     customerEmail?: string;
     customerName?: string;
     bookingId?: number;
-    [key: string]: any;
+    [key: string]: unknown;
   }
 ): Promise<void> {
   console.log(`[Workflow] Executing action: ${action.type}`, { context });
 
   switch (action.type) {
     case 'send_email':
-      await sendWorkflowEmail(action.data, context);
+      await sendWorkflowEmail(action.data as { template: string; subject: string }, context);
       break;
     
     case 'send_notification':
-      await sendWorkflowNotification(action.data, context);
+      await sendWorkflowNotification(action.data as { title: string; message: string }, context);
       break;
     
     case 'create_discount':
-      await createWorkflowDiscount(action.data, context);
+      await createWorkflowDiscount(action.data as { type: 'percentage' | 'fixed'; value: number; validDays: number }, context);
       break;
     
     case 'add_to_segment':
-      await addToSegment(action.data, context);
+      await addToSegment(action.data as { segmentName: string }, context);
       break;
     
     default:
@@ -209,7 +209,7 @@ export async function executeWorkflowAction(
  */
 async function sendWorkflowEmail(
   data: { template: string; subject: string },
-  context: any
+  context: Record<string, unknown>
 ): Promise<void> {
   // Get email template and replace variables
   const template = await getEmailTemplate(data.template, context);
@@ -229,7 +229,7 @@ async function sendWorkflowEmail(
  */
 async function sendWorkflowNotification(
   data: { title: string; message: string },
-  context: any
+  context: Record<string, unknown>
 ): Promise<void> {
   if (!context.customerId) return;
   
@@ -247,7 +247,7 @@ async function sendWorkflowNotification(
  */
 async function createWorkflowDiscount(
   data: { type: 'percentage' | 'fixed'; value: number; validDays: number },
-  context: any
+  context: Record<string, unknown>
 ): Promise<void> {
   const code = generateDiscountCode();
   const expiresAt = new Date();
@@ -282,7 +282,7 @@ async function addToSegment(
 /**
  * Get email template with variables replaced
  */
-async function getEmailTemplate(templateName: string, context: any): Promise<string> {
+async function getEmailTemplate(templateName: string, context: Record<string, unknown>): Promise<string> {
   const templates: Record<string, string> = {
     welcome: `
 Dear {{customerName}},
@@ -380,9 +380,10 @@ Best wishes,
 /**
  * Replace variables in template
  */
-function replaceVariables(template: string, context: any): string {
+function replaceVariables(template: string, context: Record<string, unknown>): string {
   return template.replace(/\{\{(\w+)\}\}/g, (match, key) => {
-    return context[key] || match;
+    const v = (context as Record<string, unknown>)[key];
+    return typeof v === 'string' || typeof v === 'number' ? String(v) : match;
   });
 }
 
@@ -403,7 +404,7 @@ function generateDiscountCode(): string {
  */
 export async function scheduleWorkflowAction(
   action: WorkflowAction,
-  context: any
+  context: Record<string, unknown>
 ): Promise<void> {
   if (action.delay && action.delay > 0) {
     // In production, use a job queue (e.g., Bull, BullMQ)
@@ -423,7 +424,7 @@ export async function scheduleWorkflowAction(
  */
 export async function triggerWorkflow(
   trigger: WorkflowTrigger['type'],
-  context: any,
+  context: Record<string, unknown>,
   workflows: MarketingWorkflow[]
 ): Promise<void> {
   const matchingWorkflows = workflows.filter(

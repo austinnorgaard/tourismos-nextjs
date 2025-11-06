@@ -33,7 +33,21 @@ export const deploymentRouter = router({
    */
   deploy: protectedProcedure.mutation(async ({ ctx }) => {
     // Get the API URL from the request origin (works in both dev and production)
-    const apiUrl = `${ctx.req.protocol}://${ctx.req.get('host')}`;
+    // ctx.req may be unknown in some calling contexts; safely extract origin if available
+    let apiUrl = "";
+    try {
+      const maybeReq = ctx.req as unknown as { protocol?: string; get?: (name: string) => string | undefined; headers?: Record<string, string> } | undefined;
+      if (maybeReq) {
+        if (maybeReq.protocol && typeof maybeReq.get === 'function') {
+          const host = maybeReq.get('host') || maybeReq.headers?.host;
+          apiUrl = `${maybeReq.protocol}://${host}`;
+        } else if (maybeReq.headers && (maybeReq.headers.origin || maybeReq.headers.host)) {
+          apiUrl = maybeReq.headers.origin || `https://${maybeReq.headers.host}`;
+        }
+      }
+    } catch (e) {
+      apiUrl = "";
+    }
     const business = await db.getBusinessByOwnerId(ctx.user.id);
     if (!business) {
       throw new TRPCError({

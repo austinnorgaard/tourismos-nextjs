@@ -99,14 +99,14 @@ export default function Integrations() {
               name="Google Calendar"
               description="Sync bookings with Google Calendar"
               icon={<Calendar className="h-8 w-8 text-blue-600" />}
-              connected={integrations?.some(i => i.provider === "google_calendar" && i.status === "connected")}
+              connected={Boolean(integrations?.some(i => i.provider === "google_calendar" && i.status === "connected"))}
             />
             <OAuthIntegrationCard
               provider="quickbooks"
               name="QuickBooks"
               description="Sync payments and invoices"
               icon={<DollarSign className="h-8 w-8 text-green-600" />}
-              connected={integrations?.some(i => i.provider === "quickbooks" && i.status === "connected")}
+              connected={Boolean(integrations?.some(i => i.provider === "quickbooks" && i.status === "connected"))}
             />
           </div>
         </CardContent>
@@ -117,7 +117,7 @@ export default function Integrations() {
         <CardHeader>
           <CardTitle>Custom Integrations</CardTitle>
           <CardDescription>
-            API integrations you've configured
+            API integrations you&apos;ve configured
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -159,9 +159,9 @@ export default function Integrations() {
                 </div>
               ))}
             </div>
-          ) : (
+            ) : (
             <div className="text-center py-8 text-muted-foreground">
-              No custom integrations yet. Click "Add Integration" to get started.
+              No custom integrations yet. Click Add Integration to get started.
             </div>
           )}
         </CardContent>
@@ -170,13 +170,14 @@ export default function Integrations() {
   );
 }
 
-function OAuthIntegrationCard({ provider, name, description, icon, connected }: {
-  provider: string;
+function OAuthIntegrationCard(props: {
+  provider?: string;
   name: string;
   description: string;
   icon: React.ReactNode;
   connected: boolean;
 }) {
+  const { name, description, icon, connected } = props;
   return (
     <div className="border rounded-lg p-4 flex items-start gap-4">
       <div className="mt-1">{icon}</div>

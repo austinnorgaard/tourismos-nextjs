@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { trpc } from "@/lib/trpc";
-import { CheckCircle2, XCircle, AlertCircle, ExternalLink, Unplug } from "lucide-react";
+import { CheckCircle2, AlertCircle, ExternalLink, Unplug } from "lucide-react";
 import { toast } from "sonner";
 
 export function StripeConnectCard() {
@@ -98,7 +98,7 @@ export function StripeConnectCard() {
               {createAccountMutation.isPending ? "Connecting..." : "Connect Stripe Account"}
             </Button>
           </div>
-        ) : status.onboardingComplete ? (
+  ) : (status && 'onboardingComplete' in status && status.onboardingComplete) ? (
           // Fully connected and onboarded
           <div className="space-y-4">
             <div className="flex items-start gap-3 p-4 bg-green-50 border border-green-200 rounded-lg">
@@ -109,7 +109,7 @@ export function StripeConnectCard() {
                   Your account is fully set up and ready to receive payments
                 </p>
                 <div className="text-xs text-green-600 mt-2 space-y-1">
-                  <div>Account ID: {status.accountId}</div>
+                  <div>Account ID: {('accountId' in status) ? status.accountId : ''}</div>
                   <div className="flex gap-4">
                     <span>✓ Charges enabled</span>
                     <span>✓ Payouts enabled</span>
@@ -147,11 +147,11 @@ export function StripeConnectCard() {
                   Complete your Stripe account setup to start receiving payments
                 </p>
                 <div className="text-xs text-yellow-600 mt-2 space-y-1">
-                  <div>Account ID: {status.accountId}</div>
+                  <div>Account ID: {('accountId' in status) ? status.accountId : ''}</div>
                   <div className="flex gap-4">
-                    <span>{status.chargesEnabled ? "✓" : "○"} Charges</span>
-                    <span>{status.payoutsEnabled ? "✓" : "○"} Payouts</span>
-                    <span>{status.detailsSubmitted ? "✓" : "○"} Details</span>
+                    <span>{('chargesEnabled' in status && status.chargesEnabled) ? "✓" : "○"} Charges</span>
+                    <span>{('payoutsEnabled' in status && status.payoutsEnabled) ? "✓" : "○"} Payouts</span>
+                    <span>{('detailsSubmitted' in status && status.detailsSubmitted) ? "✓" : "○"} Details</span>
                   </div>
                 </div>
               </div>

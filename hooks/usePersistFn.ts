@@ -1,20 +1,24 @@
-import { useRef } from "react";
+import * as React from "react";
 
-type noop = (...args: any[]) => any;
+type noop = (...args: unknown[]) => unknown;
 
 /**
  * usePersistFn 可以替代 useCallback 以降低心智负担
  */
 export function usePersistFn<T extends noop>(fn: T) {
-  const fnRef = useRef<T>(fn);
-  fnRef.current = fn;
+  const fnRef = React.useRef<T>(fn);
+  // keep current function in ref for latest call
+  React.useEffect(() => {
+    fnRef.current = fn;
+  }, [fn]);
 
-  const persistFn = useRef<T>(null);
-  if (!persistFn.current) {
-    persistFn.current = function (this: unknown, ...args) {
-      return fnRef.current!.apply(this, args);
-    } as T;
-  }
+  const persistFn = React.useMemo(() => {
+    const wrapper = ((...args: unknown[]) => {
+      return (fnRef.current as unknown as T)(...args as Parameters<T>);
+    }) as unknown as T;
 
-  return persistFn.current!;
+    return wrapper;
+  }, []);
+
+  return persistFn;
 }

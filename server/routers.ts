@@ -17,6 +17,15 @@ import Stripe from "stripe";
 import { SUBSCRIPTION_PRODUCTS } from "@/server/products";
 import { ENV } from "@/server/_core/env";
 
+type KnowledgeBaseEntry = {
+  id: number;
+  businessId: number;
+  content: string;
+  category: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
 const stripe = new Stripe(ENV.stripeSecretKey, {
   apiVersion: "2025-10-29.clover",
 });
@@ -28,14 +37,14 @@ export const appRouter = router({
   deployment: deploymentRouter,
   notifications: notificationRouter,
   sellerAdmin: sellerAdminRouter,
-  payment: paymentRouter,
+  // payment top-level router removed to avoid duplicate keys; nested payments/router exists below
   integrations: integrationsRouter,
   
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
     logout: publicProcedure.mutation(({ ctx }) => {
-      const cookieOptions = getSessionCookieOptions(ctx.req);
-      ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
+      const cookieOptions = ctx.req ? getSessionCookieOptions(ctx.req as any) : {};
+      ctx.res?.clearCookie?.(COOKIE_NAME, { ...(cookieOptions as any), maxAge: -1 });
       return { success: true } as const;
     }),
   }),
@@ -141,7 +150,7 @@ export const appRouter = router({
         
         if (business.stripeAccountId && business.stripeOnboardingComplete) {
           try {
-            const { createStripeProduct } = await import("../stripeProductService");
+            const { createStripeProduct } = await import("./stripeProductService");
             const stripeProduct = await createStripeProduct({
               name: input.name,
               description: input.description,
@@ -196,7 +205,7 @@ export const appRouter = router({
         // Sync with Stripe if connected
         if (business.stripeAccountId && offering.stripeProductId) {
           try {
-            const { updateStripeProduct, createNewPrice } = await import("../stripeProductService");
+            const { updateStripeProduct, createNewPrice } = await import("./stripeProductService");
             
             // Update product name/description
             if (input.name || input.description !== undefined) {
@@ -215,7 +224,9 @@ export const appRouter = router({
                 price: input.price,
                 stripeAccountId: business.stripeAccountId,
               });
-              data.stripePriceId = newPriceId;
+              // `data` is a partial of the update payload — assert any here to avoid
+              // strict type complaints; data will be persisted to DB as-is.
+              (data as any).stripePriceId = newPriceId;
             }
           } catch (error) {
             console.error("Failed to sync with Stripe:", error);
@@ -455,7 +466,7 @@ ${business.name} Team
           });
         }
 
-        // Semantic search: Find most relevant knowledge base entries
+  // Semantic search: Find most relevant knowledge base entries
         if (knowledgeBase.length > 0) {
           // Use AI to find relevant knowledge base entries based on user query
           const kbSearchPrompt = `Given this user question: "${input.message}"
@@ -480,20 +491,24 @@ Respond with only the relevant IDs as a comma-separated list (e.g., "0,2,5"). If
             
             if (searchResult !== "none" && searchResult.trim() !== "") {
               const relevantIds = searchResult.split(',').map((id: string) => parseInt(id.trim())).filter((id: number) => !isNaN(id));
-              const relevantKB = relevantIds.map((id: number) => knowledgeBase[id]).filter((kb: any) => kb !== undefined);
-              
+              const relevantKB = relevantIds.map((id: number) => knowledgeBase[id]).filter((k): k is KnowledgeBaseEntry => !!k);
+
               if (relevantKB.length > 0) {
                 context += `\n\nRelevant Information:\n`;
-                relevantKB.forEach((kb: any) => {
-                  context += `${kb.content}\n`;
+                relevantKB.forEach((kb) => {
+                  if (typeof kb.content === 'string') {
+                    context += `${kb.content}\n`;
+                  }
                 });
               }
             }
-          } catch (error) {
+          } catch (_error) {
             // Fallback to showing all knowledge base entries if semantic search fails
             context += `\n\nAdditional Information:\n`;
-            knowledgeBase.forEach((kb: any) => {
-              context += `${kb.content}\n`;
+            knowledgeBase.forEach((kb) => {
+              if ((kb as KnowledgeBaseEntry) && typeof (kb as KnowledgeBaseEntry).content === 'string') {
+                context += `${(kb as KnowledgeBaseEntry).content}\n`;
+              }
             });
           }
         }
@@ -503,7 +518,7 @@ Respond with only the relevant IDs as a comma-separated list (e.g., "0,2,5"). If
         // Call AI
         const aiMessages = [
           { role: "system" as const, content: context },
-          ...messages.slice(-10).map((m: any) => ({ role: m.role, content: m.content })),
+          ...messages.slice(-10).map((m: unknown) => ({ role: (m as any).role, content: (m as any).content })),
         ];
 
         const response = await invokeLLM({ messages: aiMessages });
@@ -751,8 +766,8 @@ Provide insights about booking patterns, revenue opportunities, and recommendati
               quantity: 1,
             },
           ],
-          success_url: `${ctx.req.headers.origin}/settings?payment=success`,
-          cancel_url: `${ctx.req.headers.origin}/settings?payment=cancelled`,
+          success_url: `${(ctx as any).req?.headers?.origin ?? ""}/settings?payment=success`,
+          cancel_url: `${(ctx as any).req?.headers?.origin ?? ""}/settings?payment=cancelled`,
           allow_promotion_codes: true,
         });
 
@@ -811,8 +826,8 @@ Provide insights about booking patterns, revenue opportunities, and recommendati
 
       const accountLink = await stripe.accountLinks.create({
         account: business.stripeAccountId,
-        refresh_url: `${ctx.req.headers.origin}/settings?stripe=refresh`,
-        return_url: `${ctx.req.headers.origin}/settings?stripe=success`,
+  refresh_url: `${(ctx as any).req?.headers?.origin ?? ""}/settings?stripe=refresh`,
+  return_url: `${(ctx as any).req?.headers?.origin ?? ""}/settings?stripe=success`,
         type: "account_onboarding",
       });
 

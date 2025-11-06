@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+// Badge component not used here; removed to satisfy ESLint
 import { trpc } from "@/lib/trpc";
 import { Calendar as CalendarIcon, Mail, Phone, User, List, CalendarDays } from "lucide-react";
 import { toast } from "sonner";
@@ -10,7 +10,7 @@ import { ListSkeleton } from "@/components/Skeletons";
 export default function Bookings() {
   const { data: bookings, isLoading } = trpc.bookings.list.useQuery();
   const utils = trpc.useUtils();
-  const [selectedBooking, setSelectedBooking] = useState<number | null>(null);
+  // selected booking state not currently used
   const [viewMode, setViewMode] = useState<"list" | "calendar">("list");
   const [selectedMonth, setSelectedMonth] = useState(new Date());
 
@@ -36,7 +36,7 @@ export default function Bookings() {
     const daysInMonth = lastDay.getDate();
     const startingDayOfWeek = firstDay.getDay();
 
-    const days = [];
+  const days: (Date | null)[] = [];
     // Add empty cells for days before month starts
     for (let i = 0; i < startingDayOfWeek; i++) {
       days.push(null);

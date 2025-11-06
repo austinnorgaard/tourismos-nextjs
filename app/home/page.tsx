@@ -19,6 +19,7 @@ import { useEffect } from "react";
 import { toast } from "sonner";
 
 export default function Home() {
+   
   const { user, loading, isAuthenticated } = useAuth();
   const { data: business, isLoading: businessLoading } = trpc.business.get.useQuery(undefined, {
     enabled: isAuthenticated,
@@ -133,7 +134,7 @@ function LandingPage() {
         <div className="bg-primary text-primary-foreground rounded-2xl p-12 text-center max-w-4xl mx-auto">
           <h2 className="text-3xl font-bold mb-4">Ready to Transform Your Business?</h2>
           <p className="text-lg mb-8 opacity-90">
-            Join Montana's leading tourism businesses using TourismOS
+            Join Montana&apos;s leading tourism businesses using TourismOS
           </p>
           <Button size="lg" variant="secondary" asChild>
             <Link href="/auth">
@@ -180,18 +181,39 @@ function BusinessOnboarding() {
     },
   });
 
+  type BusinessType =
+    | "tour_operator"
+    | "hotel"
+    | "restaurant"
+    | "activity_provider"
+    | "rental"
+    | "other";
+
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
-    
+
+    const getString = (key: string) => {
+      const v = formData.get(key);
+      return typeof v === "string" ? v : "";
+    };
+
+    const typeValue = formData.get("type");
+    const type = typeof typeValue === "string" ? (typeValue as BusinessType) : null;
+
+    if (!type) {
+      toast.error("Please select a business type.");
+      return;
+    }
+
     createBusinessMutation.mutate({
-      name: formData.get("name") as string,
-      type: formData.get("type") as any,
-      description: formData.get("description") as string,
-      location: formData.get("location") as string,
-      phone: formData.get("phone") as string,
-      email: formData.get("email") as string,
-      website: formData.get("website") as string,
+      name: getString("name"),
+      type,
+      description: getString("description"),
+      location: getString("location"),
+      phone: getString("phone"),
+      email: getString("email"),
+      website: getString("website"),
     });
   };
 
@@ -203,7 +225,7 @@ function BusinessOnboarding() {
             <Mountain className="h-8 w-8 text-primary" />
             <span className="text-2xl font-bold">TourismOS</span>
           </div>
-          <CardTitle className="text-2xl">Welcome! Let's set up your business</CardTitle>
+          <CardTitle className="text-2xl">Welcome! Let&apos;s set up your business</CardTitle>
           <CardDescription>
             Tell us about your tourism business to get started with TourismOS
           </CardDescription>

@@ -1,25 +1,30 @@
-'use client';
+"use client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+ 
 import { APP_LOGO, APP_TITLE } from "@/const";
 import { Mountain } from "lucide-react";
 import { useState, useEffect } from "react";
-import { useLocation, Link } from "wouter";
+import Link from "next/link";
 import { toast } from "sonner";
 
 export default function Auth() {
-  const [location, setLocation] = useLocation();
   const [isLogin, setIsLogin] = useState(true);
   const [loading, setLoading] = useState(false);
 
   // Check for OAuth errors in URL
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const error = params.get('error');
-    if (error) {
-      toast.error(`${error.charAt(0).toUpperCase() + error.slice(1)} login failed. Please try again.`);
+    if (typeof window === 'undefined') return;
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const error = params.get('error');
+      if (error) {
+        toast.error(`${error.charAt(0).toUpperCase() + error.slice(1)} login failed. Please try again.`);
+      }
+    } catch (e) {
+      // ignore
     }
-  }, [location]);
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -27,15 +32,22 @@ export default function Auth() {
 
     const formData = new FormData(e.currentTarget);
     const endpoint = isLogin ? "/api/auth/login" : "/api/auth/signup";
-    
-    const body: any = {
-      email: formData.get("email"),
-      password: formData.get("password"),
+
+    type AuthBody = {
+      email: string | null;
+      password: string | null;
+      name?: string | null;
+      username?: string | null;
+    };
+
+    const body: AuthBody = {
+      email: formData.get("email") as string | null,
+      password: formData.get("password") as string | null,
     };
 
     if (!isLogin) {
-      body.name = formData.get("name");
-      body.username = formData.get("username");
+      body.name = formData.get("name") as string | null;
+      body.username = formData.get("username") as string | null;
     }
 
     try {
@@ -55,6 +67,7 @@ export default function Auth() {
         toast.error(data.error || "Authentication failed");
       }
     } catch (error) {
+      console.log(error)
       toast.error("An error occurred. Please try again.");
     } finally {
       setLoading(false);
@@ -157,7 +170,7 @@ export default function Auth() {
             <Button
               type="button"
               variant="outline"
-              onClick={() => window.location.href = "/api/auth/google"}
+              onClick={() => { if (typeof window !== 'undefined') window.location.href = "/api/auth/google"; }}
               className="w-full"
             >
               <svg className="h-5 w-5" viewBox="0 0 24 24">
@@ -170,7 +183,7 @@ export default function Auth() {
             <Button
               type="button"
               variant="outline"
-              onClick={() => window.location.href = "/api/auth/microsoft"}
+              onClick={() => { if (typeof window !== 'undefined') window.location.href = "/api/auth/microsoft"; }}
               className="w-full"
             >
               <svg className="h-5 w-5" viewBox="0 0 23 23">

@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { trpc } from "@/lib/trpc";
-import { Clock, DollarSign, MapPin, Plus, Users, Pencil, Trash2 } from "lucide-react";
+import { DollarSign, Plus, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useState } from "react";
 import { ImageUpload } from "@/components/ImageUpload";
@@ -12,7 +12,7 @@ import { CardSkeleton } from "@/components/Skeletons";
 export default function Offerings() {
   const { data: offerings, isLoading } = trpc.offerings.list.useQuery();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [editingOffering, setEditingOffering] = useState<any>(null);
+  const [editingOffering, setEditingOffering] = useState<Offering | null>(null);
 
   if (isLoading) {
     return (
@@ -101,7 +101,7 @@ export default function Offerings() {
   );
 }
 
-function OfferingCard({ offering, onEdit }: { offering: any; onEdit: () => void }) {
+function OfferingCard({ offering, onEdit }: { offering: Offering; onEdit: () => void }) {
   const utils = trpc.useUtils();
   
   const deleteOfferingMutation = trpc.offerings.delete.useMutation({
@@ -120,6 +120,26 @@ function OfferingCard({ offering, onEdit }: { offering: any; onEdit: () => void 
       utils.offerings.list.invalidate();
     },
   });
+
+  const handleToggleActive = () => {
+    const idNumber = Number(offering.id);
+    if (Number.isNaN(idNumber)) {
+      toast.error("Invalid offering id");
+      return;
+    }
+    toggleActiveMutation.mutate({ id: idNumber, active: !offering.active });
+  };
+
+  const handleDelete = () => {
+    const idNumber = Number(offering.id);
+    if (Number.isNaN(idNumber)) {
+      toast.error("Invalid offering id");
+      return;
+    }
+    if (confirm("Are you sure you want to delete this offering?")) {
+      deleteOfferingMutation.mutate({ id: idNumber });
+    }
+  };
 
   return (
     <Card>
@@ -142,28 +162,9 @@ function OfferingCard({ offering, onEdit }: { offering: any; onEdit: () => void 
         <div className="space-y-2 mb-4">
           <div className="flex items-center gap-2 text-sm">
             <DollarSign className="h-4 w-4 text-muted-foreground" />
-            <span className="font-medium">${(offering.price / 100).toFixed(2)}</span>
+            <span className="font-medium">${((offering.price ?? 0) / 100).toFixed(2)}</span>
           </div>
-          {offering.durationMinutes && (
-            <div className="flex items-center gap-2 text-sm">
-              <Clock className="h-4 w-4 text-muted-foreground" />
-              <span>{offering.durationMinutes} minutes</span>
-            </div>
-          )}
-          {offering.capacity && (
-            <div className="flex items-center gap-2 text-sm">
-              <Users className="h-4 w-4 text-muted-foreground" />
-              <span>Up to {offering.capacity} people</span>
-            </div>
-          )}
-          {offering.location && (
-            <div className="flex items-center gap-2 text-sm">
-              <MapPin className="h-4 w-4 text-muted-foreground" />
-              <span className="line-clamp-1">{offering.location}</span>
-            </div>
-          )}
         </div>
-
         <div className="flex gap-2">
           <Button size="sm" variant="outline" onClick={onEdit} className="flex-1">
             <Pencil className="h-3 w-3 mr-1" />
@@ -172,10 +173,7 @@ function OfferingCard({ offering, onEdit }: { offering: any; onEdit: () => void 
           <Button
             size="sm"
             variant="outline"
-            onClick={() => toggleActiveMutation.mutate({ 
-              id: offering.id, 
-              active: !offering.active 
-            })}
+            onClick={handleToggleActive}
             disabled={toggleActiveMutation.isPending}
           >
             {offering.active ? 'Deactivate' : 'Activate'}
@@ -183,11 +181,7 @@ function OfferingCard({ offering, onEdit }: { offering: any; onEdit: () => void 
           <Button
             size="sm"
             variant="destructive"
-            onClick={() => {
-              if (confirm('Are you sure you want to delete this offering?')) {
-                deleteOfferingMutation.mutate({ id: offering.id });
-              }
-            }}
+            onClick={handleDelete}
             disabled={deleteOfferingMutation.isPending}
           >
             <Trash2 className="h-3 w-3" />
@@ -198,7 +192,20 @@ function OfferingCard({ offering, onEdit }: { offering: any; onEdit: () => void 
   );
 }
 
-function OfferingForm({ offering, onSuccess }: { offering?: any; onSuccess: () => void }) {
+type Offering = {
+  id?: number | string;
+  name?: string;
+  description?: string | null;
+  type?: 'tour' | 'activity' | 'accommodation' | 'rental' | 'experience' | 'other';
+  price?: number;
+  durationMinutes?: number | null;
+  capacity?: number | null;
+  location?: string | null;
+  images?: string | null;
+  active?: boolean;
+}
+
+function OfferingForm({ offering, onSuccess }: { offering?: Offering; onSuccess: () => void }) {
   const utils = trpc.useUtils();
   const [imageUrl, setImageUrl] = useState<string>("");
   
@@ -231,7 +238,7 @@ function OfferingForm({ offering, onSuccess }: { offering?: any; onSuccess: () =
     const data = {
       name: formData.get("name") as string,
       description: formData.get("description") as string,
-      type: formData.get("type") as any,
+      type: formData.get("type") as "tour" | "activity" | "accommodation" | "rental" | "experience" | "other",
       price: Math.round(parseFloat(formData.get("price") as string) * 100),
       durationMinutes: formData.get("durationMinutes") ? parseInt(formData.get("durationMinutes") as string) : undefined,
       capacity: formData.get("capacity") ? parseInt(formData.get("capacity") as string) : undefined,
@@ -240,7 +247,16 @@ function OfferingForm({ offering, onSuccess }: { offering?: any; onSuccess: () =
     };
 
     if (offering) {
-      updateMutation.mutate({ id: offering.id, ...data });
+      if (!offering.id) {
+        toast.error("Invalid offering id");
+        return;
+      }
+      const idNumber = Number(offering.id);
+      if (Number.isNaN(idNumber)) {
+        toast.error("Invalid offering id");
+        return;
+      }
+      updateMutation.mutate({ id: idNumber, ...data });
     } else {
       createMutation.mutate(data);
     }
@@ -248,7 +264,7 @@ function OfferingForm({ offering, onSuccess }: { offering?: any; onSuccess: () =
 
   const isPending = createMutation.isPending || updateMutation.isPending;
 
-  const currentImages = offering?.images ? JSON.parse(offering.images) : [];
+  const currentImages: string[] = offering?.images ? JSON.parse(offering.images) as string[] : [];
   const currentImage = currentImages[0] || null;
 
   return (
@@ -293,7 +309,7 @@ function OfferingForm({ offering, onSuccess }: { offering?: any; onSuccess: () =
         <textarea
           name="description"
           rows={3}
-          defaultValue={offering?.description}
+          defaultValue={offering?.description ?? undefined}
           className="w-full px-3 py-2 border rounded-md"
           placeholder="Describe your offering..."
         />
@@ -302,53 +318,53 @@ function OfferingForm({ offering, onSuccess }: { offering?: any; onSuccess: () =
       <div className="grid md:grid-cols-2 gap-4">
         <div>
           <label className="block text-sm font-medium mb-2">Price (USD) *</label>
-          <input
-            type="number"
-            name="price"
-            required
-            step="0.01"
-            min="0"
-            defaultValue={offering ? (offering.price / 100).toFixed(2) : ''}
-            className="w-full px-3 py-2 border rounded-md"
-            placeholder="99.99"
-          />
+            <input
+              type="number"
+              name="price"
+              required
+              step="0.01"
+              min="0"
+              defaultValue={offering && typeof offering.price === 'number' ? (offering.price / 100).toFixed(2) : ''}
+              className="w-full px-3 py-2 border rounded-md"
+              placeholder="99.99"
+            />
         </div>
 
         <div>
           <label className="block text-sm font-medium mb-2">Duration (minutes)</label>
-          <input
-            type="number"
-            name="durationMinutes"
-            min="0"
-            defaultValue={offering?.durationMinutes}
-            className="w-full px-3 py-2 border rounded-md"
-            placeholder="120"
-          />
+            <input
+              type="number"
+              name="durationMinutes"
+              min="0"
+              defaultValue={typeof offering?.durationMinutes === 'number' ? offering.durationMinutes : undefined}
+              className="w-full px-3 py-2 border rounded-md"
+              placeholder="120"
+            />
         </div>
       </div>
 
       <div className="grid md:grid-cols-2 gap-4">
         <div>
           <label className="block text-sm font-medium mb-2">Capacity (people)</label>
-          <input
-            type="number"
-            name="capacity"
-            min="1"
-            defaultValue={offering?.capacity}
-            className="w-full px-3 py-2 border rounded-md"
-            placeholder="10"
-          />
+            <input
+              type="number"
+              name="capacity"
+              min="1"
+              defaultValue={typeof offering?.capacity === 'number' ? offering.capacity : undefined}
+              className="w-full px-3 py-2 border rounded-md"
+              placeholder="10"
+            />
         </div>
 
         <div>
           <label className="block text-sm font-medium mb-2">Location</label>
-          <input
-            type="text"
-            name="location"
-            defaultValue={offering?.location}
-            className="w-full px-3 py-2 border rounded-md"
-            placeholder="Glacier National Park"
-          />
+            <input
+              type="text"
+              name="location"
+              defaultValue={offering?.location ?? undefined}
+              className="w-full px-3 py-2 border rounded-md"
+              placeholder="Glacier National Park"
+            />
         </div>
       </div>
 

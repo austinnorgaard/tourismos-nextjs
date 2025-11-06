@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/* eslint-disable no-console */
+ 
 (async () => {
   // Minimal .env.local parser to avoid adding runtime dependencies
   const fs = await import('fs');

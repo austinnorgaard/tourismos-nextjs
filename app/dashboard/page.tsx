@@ -4,8 +4,8 @@ import { trpc } from "@/lib/trpc";
 import { 
   Calendar, 
   DollarSign, 
-  Users, 
-  TrendingUp,
+  //Users, 
+  //TrendingUp,
   Clock,
   CheckCircle2
 } from "lucide-react";
@@ -73,7 +73,7 @@ export default function Dashboard() {
       {/* Today's Bookings */}
       <Card>
         <CardHeader>
-          <CardTitle>Today's Bookings</CardTitle>
+          <CardTitle>Today&apos;s Bookings</CardTitle>
           <CardDescription>
             {todayBookings.length} booking{todayBookings.length !== 1 ? 's' : ''} scheduled for today
           </CardDescription>

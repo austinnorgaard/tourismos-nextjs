@@ -1,15 +1,15 @@
-'use client';
+"use client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { APP_LOGO, APP_TITLE } from "@/const";
 import { useState, useEffect } from "react";
-import { Link, useLocation } from "wouter";
+import Link from "next/link";
 import { toast } from "sonner";
 
 export default function ResetPassword() {
-  const [location] = useLocation();
+  // token is read from the browser location search params
   const [token, setToken] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -17,12 +17,17 @@ export default function ResetPassword() {
   const [success, setSuccess] = useState(false);
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const tokenParam = params.get("token");
-    if (tokenParam) {
-      setToken(tokenParam);
+    if (typeof window === 'undefined') return;
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const tokenParam = params.get("token");
+      if (tokenParam) {
+        setToken(tokenParam);
+      }
+    } catch (e) {
+      // ignore
     }
-  }, [location]);
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -54,7 +59,8 @@ export default function ResetPassword() {
       } else {
         toast.error(data.error || "Failed to reset password");
       }
-    } catch (error) {
+    } catch {
+      // network errors are reported to the user
       toast.error("Network error. Please try again.");
     } finally {
       setLoading(false);
@@ -86,6 +92,7 @@ export default function ResetPassword() {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           {APP_LOGO && (
+            // eslint-disable-next-line @next/next/no-img-element
             <img src={APP_LOGO} alt={APP_TITLE} className="h-12 mx-auto mb-4" />
           )}
           <h1 className="text-3xl font-bold text-slate-900">{APP_TITLE}</h1>

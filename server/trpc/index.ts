@@ -6,13 +6,22 @@ import { publicRouter } from "@/server/trpc/routers/publicRouter";
 import { deploymentRouter } from "@/server/trpc/routers/deploymentRouter";
 import { notificationRouter } from "@/server/trpc/routers/notificationRouter";
 import { sellerAdminRouter } from "@/server/trpc/routers/sellerAdminRouter";
-import { paymentRouter } from "@/server/trpc/routers/paymentRouter";
 import { integrationsRouter } from "@/server/trpc/routers/integrationsRouter";
+import { paymentRouter } from "@/server/trpc/routers/paymentRouter";
 import { publicProcedure, protectedProcedure, router } from "@/server/trpc";
 import { z } from "zod";
 import * as db from "@/server/db";
 import { TRPCError } from "@trpc/server";
 import { invokeLLM } from "@/server/_core/llm";
+
+type KnowledgeBaseEntry = {
+  id: number;
+  businessId: number;
+  content: string;
+  category: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+};
 import Stripe from "stripe";
 import { SUBSCRIPTION_PRODUCTS } from "@/server/products";
 import { ENV } from "@/server/_core/env";
@@ -195,7 +204,7 @@ export const appRouter = router({
         // Sync with Stripe if connected
         if (business.stripeAccountId && offering.stripeProductId) {
           try {
-            const { updateStripeProduct, createNewPrice } = await import("../stripeProductService");
+            const { updateStripeProduct, createNewPrice } = await import("./../stripeProductService");
             
             // Update product name/description
             if (input.name || input.description !== undefined) {
@@ -214,7 +223,7 @@ export const appRouter = router({
                 price: input.price,
                 stripeAccountId: business.stripeAccountId,
               });
-              data.stripePriceId = newPriceId;
+              (data as { [key: string]: unknown }).stripePriceId = newPriceId as unknown as string;
             }
           } catch (error) {
             console.error("Failed to sync with Stripe:", error);
@@ -479,20 +488,23 @@ Respond with only the relevant IDs as a comma-separated list (e.g., "0,2,5"). If
             
             if (searchResult !== "none" && searchResult.trim() !== "") {
               const relevantIds = searchResult.split(',').map((id: string) => parseInt(id.trim())).filter((id: number) => !isNaN(id));
-              const relevantKB = relevantIds.map((id: number) => knowledgeBase[id]).filter((kb: any) => kb !== undefined);
-              
+              const relevantKB = relevantIds.map((id: number) => knowledgeBase[id]).filter((k): k is KnowledgeBaseEntry => !!k);
+
               if (relevantKB.length > 0) {
                 context += `\n\nRelevant Information:\n`;
-                relevantKB.forEach((kb: any) => {
-                  context += `${kb.content}\n`;
+                relevantKB.forEach((kb) => {
+                  if (typeof kb.content === 'string') context += `${kb.content}\n`;
                 });
               }
             }
-          } catch (error) {
+          } catch (err) {
+            console.debug('Semantic search error', err);
             // Fallback to showing all knowledge base entries if semantic search fails
             context += `\n\nAdditional Information:\n`;
-            knowledgeBase.forEach((kb: any) => {
-              context += `${kb.content}\n`;
+            knowledgeBase.forEach((kb) => {
+              if ((kb as KnowledgeBaseEntry) && typeof (kb as KnowledgeBaseEntry).content === 'string') {
+                context += `${(kb as KnowledgeBaseEntry).content}\n`;
+              }
             });
           }
         }
@@ -502,7 +514,10 @@ Respond with only the relevant IDs as a comma-separated list (e.g., "0,2,5"). If
         // Call AI
         const aiMessages = [
           { role: "system" as const, content: context },
-          ...messages.slice(-10).map((m: any) => ({ role: m.role, content: m.content })),
+          ...messages.slice(-10).map((m: unknown) => {
+            const mm = m as Record<string, unknown>;
+            return { role: typeof mm.role === 'string' ? mm.role : 'user', content: typeof mm.content === 'string' ? mm.content : '' };
+          }),
         ];
 
         const response = await invokeLLM({ messages: aiMessages });
@@ -710,7 +725,7 @@ Provide insights about booking patterns, revenue opportunities, and recommendati
   }),
 
   // ============ Payment & Subscriptions ============
-  payment: router({
+  payments: router({
     createCheckoutSession: protectedProcedure
       .input(z.object({
         tier: z.enum(["starter", "professional", "enterprise"]),
@@ -750,8 +765,8 @@ Provide insights about booking patterns, revenue opportunities, and recommendati
               quantity: 1,
             },
           ],
-          success_url: `${ctx.req.headers.origin}/settings?payment=success`,
-          cancel_url: `${ctx.req.headers.origin}/settings?payment=cancelled`,
+          success_url: `${(ctx.req && typeof (ctx.req as any).headers === 'object' && ((ctx.req as any).headers.origin || ((ctx.req as any).headers as Record<string, string>)?.origin)) || ''}/settings?payment=success`,
+          cancel_url: `${(ctx.req && typeof (ctx.req as any).headers === 'object' && ((ctx.req as any).headers.origin || ((ctx.req as any).headers as Record<string, string>)?.origin)) || ''}/settings?payment=cancelled`,
           allow_promotion_codes: true,
         });
 
@@ -810,8 +825,8 @@ Provide insights about booking patterns, revenue opportunities, and recommendati
 
       const accountLink = await stripe.accountLinks.create({
         account: business.stripeAccountId,
-        refresh_url: `${ctx.req.headers.origin}/settings?stripe=refresh`,
-        return_url: `${ctx.req.headers.origin}/settings?stripe=success`,
+        refresh_url: `${(ctx.req && typeof (ctx.req as unknown) === 'object' && ((ctx.req as any).headers?.origin || (((ctx.req as unknown) as Record<string, unknown>).headers && (( (ctx.req as unknown) as any).headers.origin)))) || ''}/settings?stripe=refresh`,
+        return_url: `${(ctx.req && typeof (ctx.req as unknown) === 'object' && ((ctx.req as any).headers?.origin || (((ctx.req as unknown) as Record<string, unknown>).headers && (( (ctx.req as unknown) as any).headers.origin)))) || ''}/settings?stripe=success`,
         type: "account_onboarding",
       });
 
@@ -847,7 +862,8 @@ Provide insights about booking patterns, revenue opportunities, and recommendati
           detailsSubmitted: account.details_submitted,
           onboardingComplete: isComplete,
         };
-      } catch (error) {
+      } catch (err) {
+        console.debug('Stripe price update error', err);
         return { connected: false, error: "Failed to retrieve account" };
       }
     }),
@@ -892,8 +908,8 @@ Provide insights about booking patterns, revenue opportunities, and recommendati
         scheduledFor: z.date().optional(),
         targetAudience: z.string().optional(),
       }))
-      .mutation(async ({ ctx, input }) => {
-        const business = await db.getBusinessByOwnerId(ctx.user.id);
+  .mutation(async ({ ctx, input }) => {
+    const business = await db.getBusinessByOwnerId(ctx.user.id);
         if (!business) {
           throw new TRPCError({ code: "BAD_REQUEST", message: "No business found" });
         }

@@ -4,7 +4,11 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { Loader2, Send, User, Sparkles } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
-import { Streamdown } from "streamdown";
+import dynamic from 'next/dynamic';
+
+// Streamdown imports a CSS file (katex) which causes server bundlers to choke.
+// Load Streamdown as a client-only component to avoid server-side CSS imports.
+const Streamdown = dynamic(() => import('streamdown').then((mod) => mod.Streamdown), { ssr: false });
 
 /**
  * Message type matching server-side LLM Message interface

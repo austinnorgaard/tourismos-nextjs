@@ -66,7 +66,7 @@ pnpm dev
 3. Add environment variables (see below)
 4. Deploy!
 
-**See [MIGRATION_GUIDE.md](./MIGRATION_GUIDE.md) for detailed instructions.**
+**See [Migration Guide](./docs/MIGRATION_GUIDE.md) for detailed instructions.**
 
 ### Environment Variables
 
@@ -89,7 +89,9 @@ NEXT_PUBLIC_APP_LOGO="https://..."
 
 ## 📖 Documentation
 
-- [Migration Guide](./MIGRATION_GUIDE.md) - Complete migration and deployment guide
+- [Migration Guide](./docs/MIGRATION_GUIDE.md) - Complete migration and deployment guide
+- [Migration Summary](./docs/MIGRATION_SUMMARY.md) - Short completion summary
+- [Deployment Checklist](./docs/DEPLOYMENT_CHECKLIST.md) - Pre/post deployment checklist
 - [Next.js Docs](https://nextjs.org/docs)
 - [tRPC Docs](https://trpc.io/docs)
 

@@ -10,7 +10,7 @@ import { useState } from "react";
 export default function PublicSite() {
   const { data: deployment, isLoading, refetch } = trpc.deployment.get.useQuery();
   const deployMutation = trpc.deployment.deploy.useMutation({
-    onSuccess: (data) => {
+    onSuccess: () => {
       toast.success("Site deployed successfully!");
       refetch();
     },
@@ -357,7 +357,7 @@ export default function PublicSite() {
         </CardHeader>
         <CardContent className="space-y-3 text-sm text-muted-foreground">
           <p>
-            <strong>1. Deploy:</strong> Click "Deploy Site" to create your public booking website.
+            <strong>1. Deploy:</strong> Click &quot;Deploy Site&quot; to create your public booking website.
             Your site will be automatically deployed with your business branding, offerings, and booking system.
           </p>
           <p>
@@ -368,7 +368,7 @@ export default function PublicSite() {
           </p>
           <p>
             <strong>4. Automatic Updates:</strong> When you update your business info, offerings, or branding in the dashboard,
-            click "Redeploy" to update your public site.
+            click &quot;Redeploy&quot; to update your public site.
           </p>
         </CardContent>
       </Card>

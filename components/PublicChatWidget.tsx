@@ -4,7 +4,10 @@ import { Input } from "@/components/ui/input";
 import { trpc } from "@/lib/trpc";
 import { MessageCircle, X, Send } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
-import { Streamdown } from "streamdown";
+import dynamic from 'next/dynamic';
+
+// Client-only Streamdown to avoid server-side CSS import errors
+const Streamdown = dynamic(() => import('streamdown').then((mod) => mod.Streamdown), { ssr: false });
 
 export default function PublicChatWidget({ businessId }: { businessId?: number }) {
   const [isOpen, setIsOpen] = useState(false);

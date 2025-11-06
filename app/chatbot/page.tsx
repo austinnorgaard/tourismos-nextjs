@@ -5,7 +5,8 @@ import { trpc } from "@/lib/trpc";
 import { Bot, Plus, Trash2, MessageSquare, Code } from "lucide-react";
 import { toast } from "sonner";
 import { useState } from "react";
-import { Streamdown } from "streamdown";
+import dynamic from 'next/dynamic';
+const Streamdown = dynamic(() => import('streamdown').then((m) => m.Streamdown), { ssr: false });
 
 export default function Chatbot() {
   const [testMessage, setTestMessage] = useState("");
@@ -13,8 +14,8 @@ export default function Chatbot() {
   const [conversationId, setConversationId] = useState<number | undefined>();
 
   const { data: business } = trpc.business.get.useQuery();
-  const { data: knowledgeBase, isLoading } = trpc.knowledgeBase.list.useQuery();
-  const utils = trpc.useUtils();
+  // const { data: knowledgeBase, isLoading } = trpc.knowledgeBase.list.useQuery();
+  // const utils = trpc.useUtils();
 
   const sendMessageMutation = trpc.chatbot.sendMessage.useMutation({
     onSuccess: (data) => {

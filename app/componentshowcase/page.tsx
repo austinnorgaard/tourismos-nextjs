@@ -178,7 +178,7 @@ export default function ComponentsShowcase() {
   const { theme, toggleTheme } = useTheme();
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [datePickerDate, setDatePickerDate] = useState<Date>();
-  const [selectedFruits, setSelectedFruits] = useState<string[]>([]);
+  // const [selectedFruits, setSelectedFruits] = useState<string[]>([]);
   const [progress, setProgress] = useState(33);
   const [currentPage, setCurrentPage] = useState(2);
   const [openCombobox, setOpenCombobox] = useState(false);
@@ -971,13 +971,13 @@ export default function ComponentsShowcase() {
                 <AccordionTrigger>Is it styled?</AccordionTrigger>
                 <AccordionContent>
                   Yes. It comes with default styles that matches the other
-                  components' aesthetic.
+                  components&apos; aesthetic.
                 </AccordionContent>
               </AccordionItem>
               <AccordionItem value="item-3">
                 <AccordionTrigger>Is it animated?</AccordionTrigger>
                 <AccordionContent>
-                  Yes. It's animated by default, but you can disable it if you
+                  Yes. It&apos;s animated by default, but you can disable it if you
                   prefer.
                 </AccordionContent>
               </AccordionItem>
@@ -1066,7 +1066,7 @@ export default function ComponentsShowcase() {
                         <SheetTitle>Edit profile</SheetTitle>
                         <SheetDescription>
                           Make changes to your profile here. Click save when
-                          you're done.
+                          you&apos;re done.
                         </SheetDescription>
                       </SheetHeader>
                     </SheetContent>
@@ -1404,7 +1404,7 @@ export default function ComponentsShowcase() {
                       Features markdown rendering, auto-scrolling, and loading states.
                     </p>
                     <p className="mt-2">
-                      This is a demo with simulated responses. In a real app, you'd connect it to a tRPC mutation.
+                      This is a demo with simulated responses. In a real app, you&apos;d connect it to a tRPC mutation.
                     </p>
                   </div>
                   <AIChatBox

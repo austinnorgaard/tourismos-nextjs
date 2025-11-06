@@ -22,10 +22,7 @@ export function ThemeProvider({
   switchable = false,
 }: ThemeProviderProps) {
   const [theme, setTheme] = useState<Theme>(() => {
-    if (switchable) {
-      const stored = localStorage.getItem("theme");
-      return (stored as Theme) || defaultTheme;
-    }
+    // Avoid accessing localStorage during SSR — return default and sync in effect
     return defaultTheme;
   });
 
@@ -38,7 +35,18 @@ export function ThemeProvider({
     }
 
     if (switchable) {
-      localStorage.setItem("theme", theme);
+      try {
+        const stored = localStorage.getItem("theme");
+        if (stored) {
+          // If localStorage has a value and it's different, sync
+          // eslint-disable-next-line react-hooks/set-state-in-effect
+          if (stored !== theme) setTheme(stored as Theme);
+        } else {
+          localStorage.setItem("theme", theme);
+        }
+      } catch {
+        // ignore if localStorage isn't available
+      }
     }
   }, [theme, switchable]);
 

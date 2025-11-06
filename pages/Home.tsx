@@ -1,3 +1,4 @@
+"use client";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,7 +19,7 @@ import { useEffect } from "react";
 import { toast } from "sonner";
 
 export default function Home() {
-  const { user, loading, isAuthenticated } = useAuth();
+  const { loading, isAuthenticated } = useAuth();
   const { data: business, isLoading: businessLoading } = trpc.business.get.useQuery(undefined, {
     enabled: isAuthenticated,
   });
@@ -132,7 +133,7 @@ function LandingPage() {
         <div className="bg-primary text-primary-foreground rounded-2xl p-12 text-center max-w-4xl mx-auto">
           <h2 className="text-3xl font-bold mb-4">Ready to Transform Your Business?</h2>
           <p className="text-lg mb-8 opacity-90">
-            Join Montana's leading tourism businesses using TourismOS
+            Join Montana&apos;s leading tourism businesses using TourismOS
           </p>
           <Button size="lg" variant="secondary" asChild>
             <Link href="/auth">
@@ -185,7 +186,7 @@ function BusinessOnboarding() {
     
     createBusinessMutation.mutate({
       name: formData.get("name") as string,
-      type: formData.get("type") as any,
+      type: formData.get("type") as "tour_operator" | "hotel" | "restaurant" | "activity_provider" | "rental" | "other",
       description: formData.get("description") as string,
       location: formData.get("location") as string,
       phone: formData.get("phone") as string,
@@ -202,7 +203,7 @@ function BusinessOnboarding() {
             <Mountain className="h-8 w-8 text-primary" />
             <span className="text-2xl font-bold">TourismOS</span>
           </div>
-          <CardTitle className="text-2xl">Welcome! Let's set up your business</CardTitle>
+          <CardTitle className="text-2xl">Welcome! Let&apos;s set up your business</CardTitle>
           <CardDescription>
             Tell us about your tourism business to get started with TourismOS
           </CardDescription>

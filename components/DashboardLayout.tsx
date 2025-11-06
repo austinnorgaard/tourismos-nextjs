@@ -1,3 +1,4 @@
+"use client";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -21,7 +22,6 @@ import {
 } from "@/components/ui/sidebar";
 import { APP_TITLE } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
-"use client";
 import { LayoutDashboard, LogOut, PanelLeft, Users, Calendar, Package, Bot, Mail, BarChart3, Settings, Mountain, Globe, Crown, Plug } from "lucide-react";
 import { NotificationCenter } from "./NotificationCenter";
 import { CSSProperties, useEffect, useRef, useState } from "react";

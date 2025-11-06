@@ -1,0 +1,1 @@
+ALTER TABLE `campaigns` MODIFY COLUMN `type` enum('email','social','sms') NOT NULL;

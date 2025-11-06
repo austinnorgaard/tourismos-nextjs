@@ -1,0 +1,20 @@
+CREATE TABLE `integrations` (
+	`id` int AUTO_INCREMENT NOT NULL,
+	`businessId` int NOT NULL,
+	`provider` varchar(100) NOT NULL,
+	`name` varchar(255) NOT NULL,
+	`type` enum('oauth','api_key','custom') NOT NULL,
+	`status` enum('connected','disconnected','error','expired') NOT NULL DEFAULT 'connected',
+	`accessToken` text,
+	`refreshToken` text,
+	`tokenExpiresAt` timestamp,
+	`apiKey` text,
+	`apiSecret` text,
+	`baseUrl` varchar(500),
+	`metadata` text,
+	`lastSyncAt` timestamp,
+	`errorMessage` text,
+	`createdAt` timestamp NOT NULL DEFAULT (now()),
+	`updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,
+	CONSTRAINT `integrations_id` PRIMARY KEY(`id`)
+);

@@ -146,7 +146,7 @@ export default function Team() {
                 <div>
                   <Label htmlFor="role">Role</Label>
                   <Select name="role" defaultValue="staff" required>
-                    <SelectTrigger>
+                    <SelectTrigger className="w-full">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -252,7 +252,7 @@ export default function Team() {
                         <div className="flex gap-2">
                           <Select
                             value={member.teamMember.role}
-                            onValueChange={(value) => handleRoleChange(member.teamMember.id, value as any)}
+                            onValueChange={(value) => handleRoleChange(member.teamMember.id, value as "admin" | "manager" | "staff")}
                           >
                             <SelectTrigger className="w-[120px]">
                               <SelectValue />

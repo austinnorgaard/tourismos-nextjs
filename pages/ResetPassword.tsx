@@ -1,14 +1,15 @@
+"use client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { APP_LOGO, APP_TITLE } from "@/const";
 import { useState, useEffect } from "react";
-import { Link, useLocation } from "wouter";
+import Link from 'next/link';
 import { toast } from "sonner";
+import PageWrapper from "@/components/PageWrapper";
 
 export default function ResetPassword() {
-  const [location] = useLocation();
   const [token, setToken] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -21,7 +22,7 @@ export default function ResetPassword() {
     if (tokenParam) {
       setToken(tokenParam);
     }
-  }, [location]);
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -53,7 +54,7 @@ export default function ResetPassword() {
       } else {
         toast.error(data.error || "Failed to reset password");
       }
-    } catch (error) {
+    } catch {
       toast.error("Network error. Please try again.");
     } finally {
       setLoading(false);
@@ -62,7 +63,7 @@ export default function ResetPassword() {
 
   if (!token) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-slate-50 to-blue-50">
+      <PageWrapper className="flex items-center justify-center p-4 bg-gradient-to-br from-slate-50 to-blue-50">
         <Card className="w-full max-w-md">
           <CardHeader>
             <CardTitle>Invalid Reset Link</CardTitle>
@@ -76,15 +77,16 @@ export default function ResetPassword() {
             </Link>
           </CardContent>
         </Card>
-      </div>
+      </PageWrapper>
     );
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-slate-50 to-blue-50">
+    <PageWrapper className="flex items-center justify-center p-4 bg-gradient-to-br from-slate-50 to-blue-50">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           {APP_LOGO && (
+            // eslint-disable-next-line @next/next/no-img-element
             <img src={APP_LOGO} alt={APP_TITLE} className="h-12 mx-auto mb-4" />
           )}
           <h1 className="text-3xl font-bold text-slate-900">{APP_TITLE}</h1>
@@ -156,6 +158,6 @@ export default function ResetPassword() {
           </CardContent>
         </Card>
       </div>
-    </div>
+    </PageWrapper>
   );
 }

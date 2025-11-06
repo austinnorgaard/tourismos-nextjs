@@ -1,6 +1,7 @@
 import { AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useRouter } from 'next/navigation';
 
 interface ErrorFallbackProps {
   error: Error;
@@ -11,6 +12,7 @@ interface ErrorFallbackProps {
  * Error fallback component for displaying errors gracefully
  */
 export function ErrorFallback({ error, resetError }: ErrorFallbackProps) {
+  const router = useRouter();
   return (
     <div className="flex items-center justify-center min-h-[400px] p-4">
       <Card className="max-w-md w-full">
@@ -37,7 +39,7 @@ export function ErrorFallback({ error, resetError }: ErrorFallbackProps) {
           <Button 
             variant="outline" 
             className="w-full"
-            onClick={() => window.location.href = '/'}
+            onClick={() => router.push('/')}
           >
             Go to Dashboard
           </Button>

@@ -1,9 +1,11 @@
 console.log("[OAuth] ===== OAUTH.TS FILE IS BEING LOADED =====");
 import { Router } from "express";
+import type { Request, Response, NextFunction, Express } from 'express';
 import passport from "passport";
 import { Strategy as GoogleStrategy } from "passport-google-oauth20";
 import { Strategy as MicrosoftStrategy } from "passport-microsoft";
-import { Strategy as AppleStrategy } from "passport-apple";
+// Apple OAuth disabled per user request. Keep import commented for future re-enable.
+// import { Strategy as AppleStrategy } from "passport-apple";
 import { getDb } from "@/server/db";
 import { users, oauthAccounts } from "@/drizzle/schema";
 import { eq, and } from "drizzle-orm";
@@ -14,228 +16,182 @@ import { sdk } from "@/server/_core/sdk";
 const router = Router();
 
 console.log("[OAuth] Third-party OAuth router module loaded");
+import { getOAuthConfig, requireOAuthEnv } from './config';
 
-// OAuth callback URLs
-const GOOGLE_CALLBACK_URL = process.env.GOOGLE_CALLBACK_URL || "http://localhost:3000/api/social/google/callback";
-const MICROSOFT_CALLBACK_URL = process.env.MICROSOFT_CALLBACK_URL || "http://localhost:3000/api/social/microsoft/callback";
-const APPLE_CALLBACK_URL = process.env.APPLE_CALLBACK_URL || "http://localhost:3000/api/social/apple/callback";
+const { cfg: oauthCfg, missing: oauthMissing } = requireOAuthEnv();
+
+const GOOGLE_CALLBACK_URL = oauthCfg.google.callbackUrl;
+const MICROSOFT_CALLBACK_URL = oauthCfg.microsoft.callbackUrl;
+const APPLE_CALLBACK_URL = oauthCfg.apple.callbackUrl;
+
+if (oauthMissing.length) {
+  console.warn('[OAuth] Missing OAuth credentials:', oauthMissing.join(', '));
+}
 
 // Configure Google OAuth Strategy
 console.log("[OAuth] Configuring Google strategy...");
-if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
+if (oauthCfg.google.clientId && oauthCfg.google.clientSecret) {
   console.log("[OAuth] Google credentials found, initializing strategy");
-  passport.use(
-    new GoogleStrategy(
-      {
-        clientID: process.env.GOOGLE_CLIENT_ID,
-        clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-        callbackURL: GOOGLE_CALLBACK_URL,
-      },
-      async (accessToken: string, refreshToken: string, profile: any, done: any) => {
-        try {
-          const db = await getDb();
-          if (!db) {
-            return done(new Error("Database unavailable"));
-          }
-
-          const email = profile.emails?.[0]?.value;
-          if (!email) {
-            return done(new Error("No email found in Google profile"));
-          }
-
-          // Check if OAuth account already linked
-          const [existingOAuth] = await db.select().from(oauthAccounts)
-            .where(and(
-              eq(oauthAccounts.provider, "google"),
-              eq(oauthAccounts.providerAccountId, profile.id)
-            )).limit(1);
-
-          let user;
-          if (existingOAuth) {
-            // OAuth account exists, get the user
-            [user] = await db.select().from(users).where(eq(users.id, existingOAuth.userId)).limit(1);
-            // Update last signed in
-            await db.update(users).set({ lastSignedIn: new Date() }).where(eq(users.id, user.id));
-          } else {
-            // Check if user exists by email
-            [user] = await db.select().from(users).where(eq(users.email, email)).limit(1);
-
-            if (!user) {
-              // Create new user
-              const openId = `google_${profile.id}`;
-              const result = await db.insert(users).values({
-                openId,
-                name: profile.displayName,
-                email,
-                loginMethod: "google",
-                role: "user",
-                lastSignedIn: new Date(),
-              });
-              const userId = result[0].insertId;
-              [user] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
-            } else {
-              // User exists, update last signed in
-              await db.update(users).set({ lastSignedIn: new Date() }).where(eq(users.id, user.id));
-            }
-
-            // Link OAuth account to user
-            await db.insert(oauthAccounts).values({
-              userId: user.id,
-              provider: "google",
-              providerAccountId: profile.id,
-              providerEmail: email,
-            });
-          }
-
-          return done(null, user);
-        } catch (error) {
-          return done(error);
-        }
+  const __googleVerify: any = async (accessToken: string, refreshToken: string, profile: any, done: (err?: unknown, user?: unknown) => void) => {
+    try {
+      const db = await getDb();
+      if (!db) {
+        return done(new Error("Database unavailable"));
       }
-    )
-  );
+
+      const email = profile.emails?.[0]?.value;
+      if (!email) {
+        return done(new Error("No email found in Google profile"));
+      }
+
+      // Check if OAuth account already linked
+      const [existingOAuth] = await db.select().from(oauthAccounts)
+        .where(and(
+          eq(oauthAccounts.provider, "google"),
+          eq(oauthAccounts.providerAccountId, profile.id)
+        )).limit(1);
+
+      let user;
+      if (existingOAuth) {
+        // OAuth account exists, get the user
+        [user] = await db.select().from(users).where(eq(users.id, existingOAuth.userId)).limit(1);
+        // Update last signed in
+        await db.update(users).set({ lastSignedIn: new Date() }).where(eq(users.id, user.id));
+      } else {
+        // Check if user exists by email
+        [user] = await db.select().from(users).where(eq(users.email, email)).limit(1);
+
+        if (!user) {
+          // Create new user
+          const openId = `google_${profile.id}`;
+          const result = await db.insert(users).values({
+            openId,
+            name: profile.displayName,
+            email,
+            loginMethod: "google",
+            role: "user",
+            lastSignedIn: new Date(),
+          });
+          const userId = result[0].insertId;
+          [user] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+        } else {
+          // User exists, update last signed in
+          await db.update(users).set({ lastSignedIn: new Date() }).where(eq(users.id, user.id));
+        }
+
+        // Link OAuth account to user
+        await db.insert(oauthAccounts).values({
+          userId: user.id,
+          provider: "google",
+          providerAccountId: profile.id,
+          providerEmail: email,
+        });
+      }
+
+      return done(null, user);
+    } catch (error) {
+      return done(error);
+    }
+  };
+
+  passport.use(new GoogleStrategy(
+    {
+      clientID: oauthCfg.google.clientId,
+      clientSecret: oauthCfg.google.clientSecret,
+      callbackURL: GOOGLE_CALLBACK_URL,
+    },
+    __googleVerify as any
+  ) as any);
 } else {
   console.log("[OAuth] Google credentials NOT found");
 }
 
 // Configure Microsoft OAuth Strategy
 console.log("[OAuth] Configuring Microsoft strategy...");
-if (process.env.MICROSOFT_CLIENT_ID && process.env.MICROSOFT_CLIENT_SECRET) {
+if (oauthCfg.microsoft.clientId && oauthCfg.microsoft.clientSecret) {
   console.log("[OAuth] Microsoft credentials found, initializing strategy");
-  passport.use(
-    new MicrosoftStrategy(
-      {
-        clientID: process.env.MICROSOFT_CLIENT_ID,
-        clientSecret: process.env.MICROSOFT_CLIENT_SECRET,
-        callbackURL: MICROSOFT_CALLBACK_URL,
-        scope: ["user.read"],
-      },
-      async (accessToken: string, refreshToken: string, profile: any, done: any) => {
-        try {
-          const db = await getDb();
-          if (!db) {
-            return done(new Error("Database unavailable"));
-          }
-
-          const email = profile.emails?.[0]?.value;
-          if (!email) {
-            return done(new Error("No email found in Microsoft profile"));
-          }
-
-          // Check if OAuth account already linked
-          const [existingOAuth] = await db.select().from(oauthAccounts)
-            .where(and(
-              eq(oauthAccounts.provider, "microsoft"),
-              eq(oauthAccounts.providerAccountId, profile.id)
-            )).limit(1);
-
-          let user;
-          if (existingOAuth) {
-            // OAuth account exists, get the user
-            [user] = await db.select().from(users).where(eq(users.id, existingOAuth.userId)).limit(1);
-            // Update last signed in
-            await db.update(users).set({ lastSignedIn: new Date() }).where(eq(users.id, user.id));
-          } else {
-            // Check if user exists by email
-            [user] = await db.select().from(users).where(eq(users.email, email)).limit(1);
-
-            if (!user) {
-              // Create new user
-              const openId = `microsoft_${profile.id}`;
-              const result = await db.insert(users).values({
-                openId,
-                name: profile.displayName,
-                email,
-                loginMethod: "microsoft",
-                role: "user",
-                lastSignedIn: new Date(),
-              });
-              const userId = result[0].insertId;
-              [user] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
-            } else {
-              // User exists, update last signed in
-              await db.update(users).set({ lastSignedIn: new Date() }).where(eq(users.id, user.id));
-            }
-
-            // Link OAuth account to user
-            await db.insert(oauthAccounts).values({
-              userId: user.id,
-              provider: "microsoft",
-              providerAccountId: profile.id,
-              providerEmail: email,
-            });
-          }
-
-          return done(null, user);
-        } catch (error) {
-          return done(error);
-        }
+  const __msVerify: any = async (accessToken: string, refreshToken: string, profile: any, done: (err?: unknown, user?: unknown) => void) => {
+    try {
+      const db = await getDb();
+      if (!db) {
+        return done(new Error("Database unavailable"));
       }
-    )
-  );
+
+      const email = profile.emails?.[0]?.value;
+      if (!email) {
+        return done(new Error("No email found in Microsoft profile"));
+      }
+
+      // Check if OAuth account already linked
+      const [existingOAuth] = await db.select().from(oauthAccounts)
+        .where(and(
+          eq(oauthAccounts.provider, "microsoft"),
+          eq(oauthAccounts.providerAccountId, profile.id)
+        )).limit(1);
+
+      let user;
+      if (existingOAuth) {
+        // OAuth account exists, get the user
+        [user] = await db.select().from(users).where(eq(users.id, existingOAuth.userId)).limit(1);
+        // Update last signed in
+        await db.update(users).set({ lastSignedIn: new Date() }).where(eq(users.id, user.id));
+      } else {
+        // Check if user exists by email
+        [user] = await db.select().from(users).where(eq(users.email, email)).limit(1);
+
+        if (!user) {
+          // Create new user
+          const openId = `microsoft_${profile.id}`;
+          const result = await db.insert(users).values({
+            openId,
+            name: profile.displayName,
+            email,
+            loginMethod: "microsoft",
+            role: "user",
+            lastSignedIn: new Date(),
+          });
+          const userId = result[0].insertId;
+          [user] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+        } else {
+          // User exists, update last signed in
+          await db.update(users).set({ lastSignedIn: new Date() }).where(eq(users.id, user.id));
+        }
+
+        // Link OAuth account to user
+        await db.insert(oauthAccounts).values({
+          userId: user.id,
+          provider: "microsoft",
+          providerAccountId: profile.id,
+          providerEmail: email,
+        });
+      }
+
+      return done(null, user);
+    } catch (error) {
+      return done(error);
+    }
+  };
+
+  passport.use(new MicrosoftStrategy(
+    {
+      clientID: oauthCfg.microsoft.clientId,
+      clientSecret: oauthCfg.microsoft.clientSecret,
+      callbackURL: MICROSOFT_CALLBACK_URL,
+      scope: ["user.read"],
+    },
+    __msVerify as any
+  ) as any);
 }
 
+// Apple OAuth is currently disabled. To re-enable, ensure APPLE_CLIENT_ID, APPLE_TEAM_ID,
+// APPLE_KEY_ID, and APPLE_PRIVATE_KEY are provided, then uncomment the AppleStrategy
+// import above and the code below.
+/*
 // Configure Apple OAuth Strategy
 if (process.env.APPLE_CLIENT_ID && process.env.APPLE_TEAM_ID && process.env.APPLE_KEY_ID && process.env.APPLE_PRIVATE_KEY) {
-  passport.use(
-    new AppleStrategy(
-      {
-        clientID: process.env.APPLE_CLIENT_ID,
-        teamID: process.env.APPLE_TEAM_ID,
-        keyID: process.env.APPLE_KEY_ID,
-        privateKeyString: process.env.APPLE_PRIVATE_KEY,
-        callbackURL: APPLE_CALLBACK_URL,
-      },
-      async (req: any, accessToken: string, refreshToken: string, idToken: any, profile: any, done: any) => {
-        try {
-          const db = await getDb();
-          if (!db) {
-            return done(new Error("Database unavailable"));
-          }
-
-          const email = profile.email;
-          if (!email) {
-            return done(new Error("No email found in Apple profile"));
-          }
-
-          // Find or create user
-          let [user] = await db.select().from(users).where(eq(users.email, email)).limit(1);
-
-          if (!user) {
-            // Generate openId from Apple profile sub (subject identifier)
-            const openId = `apple_${profile.sub || profile.id}`;
-            const result = await db.insert(users).values({
-              openId,
-              name: profile.name?.firstName && profile.name?.lastName 
-                ? `${profile.name.firstName} ${profile.name.lastName}` 
-                : email.split('@')[0],
-              email,
-              loginMethod: "apple",
-              role: "user",
-              lastSignedIn: new Date(),
-            });
-            const userId = result[0].insertId;
-            [user] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
-          } else {
-            // Update last signed in and ensure openId exists
-            const openId = user.openId || `apple_${profile.sub || profile.id}`;
-            await db.update(users).set({ 
-              lastSignedIn: new Date(),
-              openId,
-              loginMethod: user.loginMethod || "apple"
-            }).where(eq(users.id, user.id));
-            // Refresh user data
-            [user] = await db.select().from(users).where(eq(users.id, user.id)).limit(1);
-          }
-
-          return done(null, user);
-        } catch (error) {
-          return done(error);
-        }
-      }
-    )
-  );
+  // ... original Apple strategy code ...
 }
+*/
 
 // Test route to verify router is working
 router.get("/test", (req, res) => {
@@ -264,13 +220,13 @@ router.get(
   passport.authenticate("google", { session: false, failureRedirect: "/auth?error=google" }),
   async (req, res) => {
     try {
-      const user = req.user as any;
-      
+      const user = (req.user as unknown) as { openId?: string; name?: string } | undefined;
+
       if (!user || !user.openId) {
         console.error("[OAuth] Google callback: No user or openId found");
         return res.redirect("/auth?error=google");
       }
-      
+
       // Create session token using openId
       const sessionToken = await sdk.createSessionToken(user.openId, {
         name: user.name || "",
@@ -302,13 +258,13 @@ router.get(
   passport.authenticate("microsoft", { session: false, failureRedirect: "/auth?error=microsoft" }),
   async (req, res) => {
     try {
-      const user = req.user as any;
-      
+      const user = (req.user as unknown) as { openId?: string; name?: string } | undefined;
+
       if (!user || !user.openId) {
         console.error("[OAuth] Microsoft callback: No user or openId found");
         return res.redirect("/auth?error=microsoft");
       }
-      
+
       // Create session token using openId
       const sessionToken = await sdk.createSessionToken(user.openId, {
         name: user.name || "",
@@ -328,69 +284,47 @@ router.get(
   }
 );
 
-// Apple OAuth routes
-router.get("/apple", passport.authenticate("apple", { session: false }));
-
-router.post(
-  "/apple/callback",
-  passport.authenticate("apple", { session: false, failureRedirect: "/auth?error=apple" }),
-  async (req, res) => {
-    try {
-      const user = req.user as any;
-      
-      if (!user || !user.openId) {
-        console.error("[OAuth] Apple callback: No user or openId found");
-        return res.redirect("/auth?error=apple");
-      }
-      
-      // Create session token using openId
-      const sessionToken = await sdk.createSessionToken(user.openId, {
-        name: user.name || "",
-        expiresInMs: 365 * 24 * 60 * 60 * 1000, // 1 year
-      });
-
-      // Set cookie
-      const cookieOptions = getSessionCookieOptions(req);
-      res.cookie(COOKIE_NAME, sessionToken, cookieOptions);
-
-      // Redirect to home
-      res.redirect("/");
-    } catch (error) {
-      console.error("[OAuth] Apple callback error:", error);
-      res.redirect("/auth?error=apple");
-    }
-  }
-);
+// Apple OAuth routes are intentionally disabled. To re-enable, restore the
+// passport 'apple' routes above and ensure the Apple strategy is configured.
 
 // Error handler for OAuth routes
-router.use((err: any, req: any, res: any, next: any) => {
+router.use((err: unknown, req: Request, res: Response, _next: NextFunction) => {
   console.error("[OAuth] Error:", err);
-  res.status(500).send("Internal Server Error: " + (err.message || "Unknown error"));
+  // reference _next to satisfy no-unused-params rules
+  void _next;
+  const message = (err && typeof (err as { message?: unknown })?.message === 'string') ? (err as { message?: string }).message : 'Unknown error';
+  res.status(500).send("Internal Server Error: " + message);
 });
 
 // Export setup function to register routes directly on app
-export function setupOAuthRoutes(app: any) {
+export function setupOAuthRoutes(app: Express) {
   console.log("[OAuth] Setting up OAuth routes on /api/auth/*");
   
   // Initialize passport
   app.use(passport.initialize());
   
   // Test route
-  app.get("/api/auth/oauth-test", (req: any, res: any) => {
+  app.get("/api/auth/oauth-test", (req: Request, res: Response) => {
     res.json({ message: "OAuth routes are working", timestamp: new Date().toISOString() });
   });
   
   // Google OAuth routes
-  app.get("/api/auth/google", (req: any, res: any, next: any) => {
+  app.get("/api/auth/google", (req: Request, res: Response, next: NextFunction) => {
     console.log("[OAuth] Google route hit");
     passport.authenticate("google", { scope: ["profile", "email"], session: false })(req, res, next);
   });
   
   app.get("/api/auth/google/callback", 
     passport.authenticate("google", { session: false, failureRedirect: "/auth?error=google" }),
-    async (req: any, res: any) => {
+    async (req: Request, res: Response) => {
       try {
-        const token = await sdk.createSessionToken(req.user.openId);
+        const user = (req.user as unknown) as { openId?: string } | undefined;
+        if (!user || !user.openId) {
+          console.error('[OAuth] Google callback (setup) - no user or openId');
+          return res.redirect('/auth?error=google');
+        }
+
+        const token = await sdk.createSessionToken(user.openId);
         const cookieOptions = getSessionCookieOptions(req);
         res.cookie(COOKIE_NAME, token, cookieOptions);
         res.redirect("/");
@@ -402,16 +336,22 @@ export function setupOAuthRoutes(app: any) {
   );
   
   // Microsoft OAuth routes  
-  app.get("/api/auth/microsoft", (req: any, res: any, next: any) => {
+  app.get("/api/auth/microsoft", (req: Request, res: Response, next: NextFunction) => {
     console.log("[OAuth] Microsoft route hit");
     passport.authenticate("microsoft", { scope: ["user.read"], session: false })(req, res, next);
   });
   
   app.get("/api/auth/microsoft/callback",
     passport.authenticate("microsoft", { session: false, failureRedirect: "/auth?error=microsoft" }),
-    async (req: any, res: any) => {
+    async (req: Request, res: Response) => {
       try {
-        const token = await sdk.createSessionToken(req.user.openId);
+        const user = (req.user as unknown) as { openId?: string } | undefined;
+        if (!user || !user.openId) {
+          console.error('[OAuth] Microsoft callback (setup) - no user or openId');
+          return res.redirect('/auth?error=microsoft');
+        }
+
+        const token = await sdk.createSessionToken(user.openId);
         const cookieOptions = getSessionCookieOptions(req);
         res.cookie(COOKIE_NAME, token, cookieOptions);
         res.redirect("/");

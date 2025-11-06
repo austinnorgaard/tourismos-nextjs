@@ -3,15 +3,19 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { trpc } from "@/lib/trpc";
 import { Clock, DollarSign, MapPin, Plus, Users, Pencil, Trash2 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { toast } from "sonner";
 import { useState } from "react";
 import { ImageUpload } from "@/components/ImageUpload";
 import { CardSkeleton } from "@/components/Skeletons";
+import PageWrapper from "@/components/PageWrapper";
 
 export default function Offerings() {
   const { data: offerings, isLoading } = trpc.offerings.list.useQuery();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [editingOffering, setEditingOffering] = useState<any>(null);
+  const [editingOffering, setEditingOffering] = useState<Offering | null>(null);
 
   if (isLoading) {
     return (
@@ -30,7 +34,8 @@ export default function Offerings() {
   }
 
   return (
-    <div className="space-y-6">
+    <PageWrapper>
+      <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Offerings</h1>
@@ -96,11 +101,48 @@ export default function Offerings() {
           )}
         </DialogContent>
       </Dialog>
+      </div>
+    </PageWrapper>
+  );
+}
+
+function OfferingTypeSelect({ initialValue }: { initialValue?: string | null }) {
+  const [value, setValue] = useState(initialValue || "");
+
+  return (
+    <div>
+      <Select value={value} onValueChange={(v) => setValue(v)}>
+        <SelectTrigger className="w-full">
+          <SelectValue>{value ? value : <span className="text-muted-foreground">Select a type...</span>}</SelectValue>
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="tour">Tour</SelectItem>
+          <SelectItem value="activity">Activity</SelectItem>
+          <SelectItem value="accommodation">Accommodation</SelectItem>
+          <SelectItem value="rental">Rental</SelectItem>
+          <SelectItem value="experience">Experience</SelectItem>
+          <SelectItem value="other">Other</SelectItem>
+        </SelectContent>
+      </Select>
+  <input aria-hidden="true" type="hidden" name="type" value={value} />
     </div>
   );
 }
 
-function OfferingCard({ offering, onEdit }: { offering: any; onEdit: () => void }) {
+type Offering = {
+  id?: number | string;
+  name?: string;
+  description?: string | null;
+  type?: 'tour' | 'activity' | 'accommodation' | 'rental' | 'experience' | 'other';
+  price?: number;
+  durationMinutes?: number | null;
+  capacity?: number | null;
+  location?: string | null;
+  images?: string | null;
+  active?: boolean;
+}
+
+function OfferingCard({ offering, onEdit }: { offering: Offering; onEdit: () => void }) {
   const utils = trpc.useUtils();
   
   const deleteOfferingMutation = trpc.offerings.delete.useMutation({
@@ -141,15 +183,15 @@ function OfferingCard({ offering, onEdit }: { offering: any; onEdit: () => void 
         <div className="space-y-2 mb-4">
           <div className="flex items-center gap-2 text-sm">
             <DollarSign className="h-4 w-4 text-muted-foreground" />
-            <span className="font-medium">${(offering.price / 100).toFixed(2)}</span>
+            <span className="font-medium">${(((offering.price ?? 0) / 100)).toFixed(2)}</span>
           </div>
-          {offering.durationMinutes && (
+          {typeof offering.durationMinutes === 'number' && offering.durationMinutes > 0 && (
             <div className="flex items-center gap-2 text-sm">
               <Clock className="h-4 w-4 text-muted-foreground" />
               <span>{offering.durationMinutes} minutes</span>
             </div>
           )}
-          {offering.capacity && (
+          {typeof offering.capacity === 'number' && offering.capacity > 0 && (
             <div className="flex items-center gap-2 text-sm">
               <Users className="h-4 w-4 text-muted-foreground" />
               <span>Up to {offering.capacity} people</span>
@@ -168,11 +210,11 @@ function OfferingCard({ offering, onEdit }: { offering: any; onEdit: () => void 
             <Pencil className="h-3 w-3 mr-1" />
             Edit
           </Button>
-          <Button
+            <Button
             size="sm"
             variant="outline"
             onClick={() => toggleActiveMutation.mutate({ 
-              id: offering.id, 
+              id: Number(offering.id), 
               active: !offering.active 
             })}
             disabled={toggleActiveMutation.isPending}
@@ -184,7 +226,7 @@ function OfferingCard({ offering, onEdit }: { offering: any; onEdit: () => void 
             variant="destructive"
             onClick={() => {
               if (confirm('Are you sure you want to delete this offering?')) {
-                deleteOfferingMutation.mutate({ id: offering.id });
+                deleteOfferingMutation.mutate({ id: Number(offering.id) });
               }
             }}
             disabled={deleteOfferingMutation.isPending}
@@ -197,7 +239,7 @@ function OfferingCard({ offering, onEdit }: { offering: any; onEdit: () => void 
   );
 }
 
-function OfferingForm({ offering, onSuccess }: { offering?: any; onSuccess: () => void }) {
+function OfferingForm({ offering, onSuccess }: { offering?: Offering; onSuccess: () => void }) {
   const utils = trpc.useUtils();
   const [imageUrl, setImageUrl] = useState<string>("");
   
@@ -230,7 +272,7 @@ function OfferingForm({ offering, onSuccess }: { offering?: any; onSuccess: () =
     const data = {
       name: formData.get("name") as string,
       description: formData.get("description") as string,
-      type: formData.get("type") as any,
+  type: formData.get("type") as string as "tour" | "activity" | "accommodation" | "rental" | "experience" | "other",
       price: Math.round(parseFloat(formData.get("price") as string) * 100),
       durationMinutes: formData.get("durationMinutes") ? parseInt(formData.get("durationMinutes") as string) : undefined,
       capacity: formData.get("capacity") ? parseInt(formData.get("capacity") as string) : undefined,
@@ -239,7 +281,7 @@ function OfferingForm({ offering, onSuccess }: { offering?: any; onSuccess: () =
     };
 
     if (offering) {
-      updateMutation.mutate({ id: offering.id, ...data });
+    updateMutation.mutate({ id: Number(offering.id), ...data });
     } else {
       createMutation.mutate(data);
     }
@@ -247,7 +289,7 @@ function OfferingForm({ offering, onSuccess }: { offering?: any; onSuccess: () =
 
   const isPending = createMutation.isPending || updateMutation.isPending;
 
-  const currentImages = offering?.images ? JSON.parse(offering.images) : [];
+  const currentImages: string[] = offering?.images ? JSON.parse(offering.images) as string[] : [];
   const currentImage = currentImages[0] || null;
 
   return (
@@ -259,95 +301,76 @@ function OfferingForm({ offering, onSuccess }: { offering?: any; onSuccess: () =
       />
       <div>
         <label className="block text-sm font-medium mb-2">Name *</label>
-        <input
+        <Input
           type="text"
           name="name"
           required
           defaultValue={offering?.name}
-          className="w-full px-3 py-2 border rounded-md"
+          className="w-full"
           placeholder="Glacier Hiking Tour"
         />
       </div>
 
       <div>
         <label className="block text-sm font-medium mb-2">Type *</label>
-        <select
-          name="type"
-          required
-          defaultValue={offering?.type}
-          className="w-full px-3 py-2 border rounded-md"
-        >
-          <option value="">Select a type...</option>
-          <option value="tour">Tour</option>
-          <option value="activity">Activity</option>
-          <option value="accommodation">Accommodation</option>
-          <option value="rental">Rental</option>
-          <option value="experience">Experience</option>
-          <option value="other">Other</option>
-        </select>
+        <OfferingTypeSelect initialValue={offering?.type} />
       </div>
 
       <div>
         <label className="block text-sm font-medium mb-2">Description</label>
-        <textarea
-          name="description"
-          rows={3}
-          defaultValue={offering?.description}
-          className="w-full px-3 py-2 border rounded-md"
-          placeholder="Describe your offering..."
-        />
+        <Textarea name="description" rows={3} defaultValue={offering?.description ?? undefined} placeholder="Describe your offering..." />
       </div>
 
       <div className="grid md:grid-cols-2 gap-4">
         <div>
           <label className="block text-sm font-medium mb-2">Price (USD) *</label>
-          <input
-            type="number"
-            name="price"
-            required
-            step="0.01"
-            min="0"
-            defaultValue={offering ? (offering.price / 100).toFixed(2) : ''}
-            className="w-full px-3 py-2 border rounded-md"
-            placeholder="99.99"
-          />
+            <Input
+              type="number"
+              name="price"
+              required
+              step="0.01"
+              min="0"
+              defaultValue={offering?.price ? ((offering.price / 100).toFixed(2)) : ''}
+              className="w-full"
+              placeholder="99.99"
+            />
         </div>
 
         <div>
           <label className="block text-sm font-medium mb-2">Duration (minutes)</label>
-          <input
-            type="number"
-            name="durationMinutes"
-            min="0"
-            defaultValue={offering?.durationMinutes}
-            className="w-full px-3 py-2 border rounded-md"
-            placeholder="120"
-          />
+            <Input
+              type="number"
+              name="durationMinutes"
+              min="0"
+              defaultValue={typeof offering?.durationMinutes === 'number' ? offering.durationMinutes : undefined}
+              className="w-full"
+              placeholder="120"
+            />
         </div>
       </div>
 
       <div className="grid md:grid-cols-2 gap-4">
         <div>
           <label className="block text-sm font-medium mb-2">Capacity (people)</label>
-          <input
-            type="number"
-            name="capacity"
-            min="1"
-            defaultValue={offering?.capacity}
-            className="w-full px-3 py-2 border rounded-md"
-            placeholder="10"
-          />
+            <Input
+              type="number"
+              name="capacity"
+              min="1"
+              defaultValue={typeof offering?.capacity === 'number' ? offering.capacity : undefined}
+              className="w-full"
+              placeholder="10"
+            />
         </div>
 
         <div>
           <label className="block text-sm font-medium mb-2">Location</label>
-          <input
-            type="text"
-            name="location"
-            defaultValue={offering?.location}
-            className="w-full px-3 py-2 border rounded-md"
-            placeholder="Glacier National Park"
-          />
+            <Input
+              type="text"
+              name="location"
+              defaultValue={offering?.location ?? undefined}
+              className="w-full"
+              placeholder="Glacier National Park"
+            />
         </div>
       </div>
 

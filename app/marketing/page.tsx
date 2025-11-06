@@ -3,9 +3,13 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { trpc } from "@/lib/trpc";
 import { Mail, MessageSquare, Sparkles, Copy, Check, Users, TrendingUp, Send, Eye, MousePointerClick } from "lucide-react";
-import { toast } from "sonner";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { useState } from "react";
-import { Streamdown } from "streamdown";
+import { toast } from "sonner";
+import dynamic from 'next/dynamic';
+const Streamdown = dynamic(() => import('streamdown').then((m) => m.Streamdown), { ssr: false });
 
 export default function Marketing() {
   return (
@@ -76,35 +80,29 @@ function EmailGenerator() {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium mb-2">Campaign Goal</label>
-            <input
+            <Input
               type="text"
               name="goal"
               required
-              className="w-full px-3 py-2 border rounded-md"
+              className="w-full"
               placeholder="Promote summer tour packages"
             />
           </div>
 
           <div>
             <label className="block text-sm font-medium mb-2">Target Audience</label>
-            <input
+            <Input
               type="text"
               name="targetAudience"
               required
-              className="w-full px-3 py-2 border rounded-md"
+              className="w-full"
               placeholder="Families visiting Montana"
             />
           </div>
 
           <div>
             <label className="block text-sm font-medium mb-2">Key Message</label>
-            <textarea
-              name="keyMessage"
-              required
-              rows={3}
-              className="w-full px-3 py-2 border rounded-md"
-              placeholder="20% off all tours booked this month"
-            />
+            <Textarea name="keyMessage" required rows={3} placeholder="20% off all tours booked this month" />
           </div>
 
           <Button 
@@ -346,6 +344,28 @@ function SocialPostGenerator() {
   const [generatedPost, setGeneratedPost] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
+  type SocialPlatform = 'facebook' | 'instagram' | 'twitter' | 'linkedin';
+
+  function PlatformSelect({ name = "platform", value: initial = "facebook" }: { name?: string; value?: string }) {
+    const [value, setValue] = useState(initial);
+    return (
+      <div>
+        <input type="hidden" name={name} value={value} />
+        <Select onValueChange={(v) => setValue(v)} defaultValue={initial}>
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder="Choose platform" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="facebook">Facebook</SelectItem>
+            <SelectItem value="instagram">Instagram</SelectItem>
+            <SelectItem value="twitter">Twitter</SelectItem>
+            <SelectItem value="linkedin">LinkedIn</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+    );
+  }
+
   const generatePostMutation = trpc.ai.generateSocialPost.useMutation({
     onSuccess: (data) => {
       setGeneratedPost(data.content);
@@ -360,9 +380,12 @@ function SocialPostGenerator() {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
 
+    const platformRaw = formData.get("platform");
+    const platform = (platformRaw ? String(platformRaw) : 'facebook') as SocialPlatform;
+
     generatePostMutation.mutate({
       topic: formData.get("topic") as string,
-      platform: formData.get("platform") as any,
+      platform,
     });
   };
 
@@ -390,26 +413,12 @@ function SocialPostGenerator() {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium mb-2">Platform</label>
-            <select
-              name="platform"
-              required
-              className="w-full px-3 py-2 border rounded-md"
-            >
-              <option value="facebook">Facebook</option>
-              <option value="instagram">Instagram</option>
-              <option value="twitter">Twitter</option>
-            </select>
+            <PlatformSelect />
           </div>
 
           <div>
             <label className="block text-sm font-medium mb-2">Topic</label>
-            <textarea
-              name="topic"
-              required
-              rows={3}
-              className="w-full px-3 py-2 border rounded-md"
-              placeholder="Announce our new glacier hiking tour with stunning views"
-            />
+            <Textarea name="topic" required rows={3} placeholder="Announce our new glacier hiking tour with stunning views" />
           </div>
 
           <Button 

@@ -24,7 +24,7 @@ export const oauthRouter = router({
   // Unlink an OAuth provider
   unlink: protectedProcedure
     .input(z.object({
-      provider: z.enum(["google", "microsoft", "apple"]),
+      provider: z.enum(["google", "microsoft"]),
     }))
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();

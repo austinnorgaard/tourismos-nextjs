@@ -1,6 +1,7 @@
-'use client';
+"use client";
 
 import { useAuth } from "@/_core/hooks/useAuth";
+import { useAuthNavigate } from "@/_core/hooks/useAuthNavigate";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -15,12 +16,18 @@ import {
   ArrowRight,
   CheckCircle2
 } from "lucide-react";
-import { Link } from "wouter";
-import { useEffect } from "react";
+import NextLink from 'next/link';
+import { useEffect, useState } from "react";
+import { useRouter } from 'next/navigation';
 import { toast } from "sonner";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 
 export default function Home() {
-  const { user, loading, isAuthenticated } = useAuth();
+  const navigate = useAuthNavigate();
+  const { loading, isAuthenticated } = useAuth({ navigate });
+  const router = useRouter();
   const { data: business, isLoading: businessLoading } = trpc.business.get.useQuery(undefined, {
     enabled: isAuthenticated,
   });
@@ -28,9 +35,9 @@ export default function Home() {
   // Redirect to dashboard if user has a business
   useEffect(() => {
     if (!loading && isAuthenticated && business) {
-      window.location.href = "/dashboard";
+      router.push("/dashboard");
     }
-  }, [loading, isAuthenticated, business]);
+  }, [loading, isAuthenticated, business, router]);
 
   if (loading || businessLoading) {
     return (
@@ -60,7 +67,7 @@ function LandingPage() {
             <span className="text-2xl font-bold text-foreground">TourismOS</span>
           </div>
           <Button asChild>
-            <Link href="/auth">Get Started</Link>
+            <NextLink href="/auth" className="inline-flex items-center">Get Started</NextLink>
           </Button>
         </div>
       </header>
@@ -77,9 +84,9 @@ function LandingPage() {
           </p>
           <div className="flex gap-4 justify-center">
             <Button size="lg" asChild>
-              <Link href="/auth">
+              <NextLink href="/auth" className="inline-flex items-center">
                 Start Free Trial <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
+              </NextLink>
             </Button>
             <Button size="lg" variant="outline">
               Watch Demo
@@ -134,12 +141,12 @@ function LandingPage() {
         <div className="bg-primary text-primary-foreground rounded-2xl p-12 text-center max-w-4xl mx-auto">
           <h2 className="text-3xl font-bold mb-4">Ready to Transform Your Business?</h2>
           <p className="text-lg mb-8 opacity-90">
-            Join Montana's leading tourism businesses using TourismOS
+            Join Montana&apos;s leading tourism businesses using TourismOS
           </p>
           <Button size="lg" variant="secondary" asChild>
-            <Link href="/auth">
+            <NextLink href="/auth" className="inline-flex items-center">
               Start Your Free Trial <ArrowRight className="ml-2 h-4 w-4" />
-            </Link>
+            </NextLink>
           </Button>
         </div>
       </section>
@@ -170,11 +177,37 @@ function FeatureCard({ icon, title, description }: { icon: React.ReactNode; titl
   );
 }
 
+function BusinessTypeSelect({ name = "type", initial = "" }: { name?: string; initial?: string }) {
+  const [value, setValue] = useState(initial);
+  return (
+    <div>
+      <input type="hidden" name={name} value={value} />
+      <Select value={value} onValueChange={(v) => setValue(v)}>
+        <SelectTrigger className="w-full">
+          <SelectValue>
+            {value ? value : <span className="text-muted-foreground">Select a type...</span>}
+          </SelectValue>
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="tour_operator">Tour Operator</SelectItem>
+          <SelectItem value="hotel">Hotel / Accommodation</SelectItem>
+          <SelectItem value="restaurant">Restaurant</SelectItem>
+          <SelectItem value="activity_provider">Activity Provider</SelectItem>
+          <SelectItem value="rental">Equipment Rental</SelectItem>
+          <SelectItem value="other">Other</SelectItem>
+        </SelectContent>
+      </Select>
+    </div>
+  );
+}
+
 function BusinessOnboarding() {
+  const router = useRouter();
+
   const createBusinessMutation = trpc.business.create.useMutation({
     onSuccess: () => {
       toast.success("Business created successfully!");
-      window.location.href = "/dashboard";
+      router.push("/dashboard");
     },
     onError: (error) => {
       toast.error(error.message);
@@ -187,7 +220,7 @@ function BusinessOnboarding() {
     
     createBusinessMutation.mutate({
       name: formData.get("name") as string,
-      type: formData.get("type") as any,
+      type: formData.get("type") as "tour_operator" | "hotel" | "restaurant" | "activity_provider" | "rental" | "other",
       description: formData.get("description") as string,
       location: formData.get("location") as string,
       phone: formData.get("phone") as string,
@@ -204,7 +237,7 @@ function BusinessOnboarding() {
             <Mountain className="h-8 w-8 text-primary" />
             <span className="text-2xl font-bold">TourismOS</span>
           </div>
-          <CardTitle className="text-2xl">Welcome! Let's set up your business</CardTitle>
+          <CardTitle className="text-2xl">Welcome! Let&apos;s set up your business</CardTitle>
           <CardDescription>
             Tell us about your tourism business to get started with TourismOS
           </CardDescription>
@@ -213,59 +246,42 @@ function BusinessOnboarding() {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-sm font-medium mb-2">Business Name *</label>
-              <input
+              <Input
                 type="text"
                 name="name"
                 required
-                className="w-full px-3 py-2 border rounded-md"
+                className="w-full"
                 placeholder="Montana Adventures"
               />
             </div>
 
             <div>
               <label className="block text-sm font-medium mb-2">Business Type *</label>
-              <select
-                name="type"
-                required
-                className="w-full px-3 py-2 border rounded-md"
-              >
-                <option value="">Select a type...</option>
-                <option value="tour_operator">Tour Operator</option>
-                <option value="hotel">Hotel / Accommodation</option>
-                <option value="restaurant">Restaurant</option>
-                <option value="activity_provider">Activity Provider</option>
-                <option value="rental">Equipment Rental</option>
-                <option value="other">Other</option>
-              </select>
+              <BusinessTypeSelect name="type" />
             </div>
 
             <div>
               <label className="block text-sm font-medium mb-2">Description</label>
-              <textarea
-                name="description"
-                rows={3}
-                className="w-full px-3 py-2 border rounded-md"
-                placeholder="Tell us about your business..."
-              />
+              <Textarea name="description" rows={3} placeholder="Tell us about your business..." />
             </div>
 
             <div className="grid md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium mb-2">Location</label>
-                <input
+                <Input
                   type="text"
                   name="location"
-                  className="w-full px-3 py-2 border rounded-md"
+                  className="w-full"
                   placeholder="Kalispell, MT"
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-medium mb-2">Phone</label>
-                <input
+                <Input
                   type="tel"
                   name="phone"
-                  className="w-full px-3 py-2 border rounded-md"
+                  className="w-full"
                   placeholder="(406) 555-0123"
                 />
               </div>
@@ -273,20 +289,20 @@ function BusinessOnboarding() {
 
             <div>
               <label className="block text-sm font-medium mb-2">Email</label>
-              <input
+              <Input
                 type="email"
                 name="email"
-                className="w-full px-3 py-2 border rounded-md"
+                className="w-full"
                 placeholder="contact@yourbusiness.com"
               />
             </div>
 
             <div>
               <label className="block text-sm font-medium mb-2">Website</label>
-              <input
+              <Input
                 type="url"
                 name="website"
-                className="w-full px-3 py-2 border rounded-md"
+                className="w-full"
                 placeholder="https://yourbusiness.com"
               />
             </div>
@@ -304,3 +320,4 @@ function BusinessOnboarding() {
     </div>
   );
 }
+

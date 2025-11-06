@@ -2,6 +2,7 @@ import DashboardLayout from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { trpc } from "@/lib/trpc";
+import { useRouter } from 'next/navigation';
 import { Check, CreditCard, Zap, Crown, Rocket } from "lucide-react";
 import { toast } from "sonner";
 
@@ -60,11 +61,19 @@ const tiers = [
 ];
 
 export default function Subscription() {
+  const router = useRouter();
   const { data: business } = trpc.business.get.useQuery();
   
   const createCheckoutMutation = trpc.payment.createCheckoutSession.useMutation({
     onSuccess: (data) => {
       if (data.url) {
+        try {
+          const u = new URL(data.url);
+          if (u.origin === window.location.origin) {
+            router.push(u.pathname + u.search + u.hash);
+            return;
+          }
+        } catch (e) {}
         window.location.href = data.url;
       }
     },

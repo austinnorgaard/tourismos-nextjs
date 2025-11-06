@@ -1,0 +1,93 @@
+[
+  {
+    "id": "1237a6a5-bf2a-44df-9031-aebaa1d59a2d",
+    "customer_id": "d6e15727-9fe1-4961-8c5b-ea44a9bd81aa",
+    "amount": 15795,
+    "status": "pending",
+    "date": "2022-12-06T07:00:00.000Z"
+  },
+  {
+    "id": "7603e4a2-0f2a-4fdd-8cae-8c28d5b38ec1",
+    "customer_id": "3958dc9e-712f-4377-85e9-fec4b6a6442a",
+    "amount": 20348,
+    "status": "pending",
+    "date": "2022-11-14T07:00:00.000Z"
+  },
+  {
+    "id": "d143dadf-d518-4636-b0dd-7b2d4bf3b808",
+    "customer_id": "cc27c14a-0acf-4f4a-a6c9-d45682c144b9",
+    "amount": 3040,
+    "status": "paid",
+    "date": "2022-10-29T06:00:00.000Z"
+  },
+  {
+    "id": "e7efb340-7a4d-47cb-b62d-d549907c3726",
+    "customer_id": "76d65c26-f784-44a2-ac19-586678f7c2f2",
+    "amount": 44800,
+    "status": "paid",
+    "date": "2023-09-10T06:00:00.000Z"
+  },
+  {
+    "id": "7a986f75-f572-4358-8fb2-5a59a625cc63",
+    "customer_id": "13d07535-c59e-4157-a011-f8d2ef4e0cbb",
+    "amount": 34577,
+    "status": "pending",
+    "date": "2023-08-05T06:00:00.000Z"
+  },
+  {
+    "id": "df77493f-adfe-4ba3-8703-a403f102cc38",
+    "customer_id": "3958dc9e-742f-4377-85e9-fec4b6a6442a",
+    "amount": 54246,
+    "status": "pending",
+    "date": "2023-07-16T06:00:00.000Z"
+  },
+  {
+    "id": "8697f088-808d-4da5-8d88-ad38bbc577f9",
+    "customer_id": "d6e15727-9fe1-4961-8c5b-ea44a9bd81aa",
+    "amount": 666,
+    "status": "pending",
+    "date": "2023-06-27T06:00:00.000Z"
+  },
+  {
+    "id": "201a0fa8-a348-486a-8176-05985d746128",
+    "customer_id": "76d65c26-f784-44a2-ac19-586678f7c2f2",
+    "amount": 32545,
+    "status": "paid",
+    "date": "2023-06-09T06:00:00.000Z"
+  },
+  {
+    "id": "d6cde135-2b74-4457-be30-119791708ebf",
+    "customer_id": "cc27c14a-0acf-4f4a-a6c9-d45682c144b9",
+    "amount": 1250,
+    "status": "paid",
+    "date": "2023-06-17T06:00:00.000Z"
+  },
+  {
+    "id": "03ea4b85-592f-4a4c-9b0f-e807964dc5db",
+    "customer_id": "13d07535-c59e-4157-a011-f8d2ef4e0cbb",
+    "amount": 8546,
+    "status": "paid",
+    "date": "2023-06-07T06:00:00.000Z"
+  },
+  {
+    "id": "dc8a5f8c-ac19-4abb-8e9c-226db86607df",
+    "customer_id": "3958dc9e-712f-4377-85e9-fec4b6a6442a",
+    "amount": 500,
+    "status": "paid",
+    "date": "2023-08-19T06:00:00.000Z"
+  },
+  {
+    "id": "69f1c7e1-e64f-4de4-bf71-9f6a8df86795",
+    "customer_id": "13d07535-c59e-4157-a011-f8d2ef4e0cbb",
+    "amount": 8945,
+    "status": "paid",
+    "date": "2023-06-03T06:00:00.000Z"
+  },
+  {
+    "id": "8fc6c2bc-1a1c-4ab7-8ed9-5a770fbfbe4a",
+    "customer_id": "3958dc9e-742f-4377-85e9-fec4b6a6442a",
+    "amount": 1000,
+    "status": "paid",
+    "date": "2022-06-05T06:00:00.000Z"
+  }
+]

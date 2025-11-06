@@ -1,154 +1,46 @@
+"use client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { trpc } from "@/lib/trpc";
-import { Building2, Mail, Phone, Globe, MapPin, Shield, Link as LinkIcon, Unlink, Palette } from "lucide-react";
+import { Building2, Mail, Phone, Globe, MapPin, Palette } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { ImageUpload } from "@/components/ImageUpload";
 import { StripeConnectCard } from "@/components/StripeConnectCard";
 import { useState, useEffect } from "react";
-import { useAuth } from "@/_core/hooks/useAuth";
-import { useLocation } from "wouter";
+import { useRouter } from 'next/navigation';
+import PageWrapper from "@/components/PageWrapper";
 
-function OAuthAccountsCard() {
-  const { user } = useAuth();
-  const { data: oauthAccounts, isLoading } = trpc.oauth.list.useQuery();
-  const utils = trpc.useUtils();
-
-  const unlinkMutation = trpc.oauth.unlink.useMutation({
-    onSuccess: () => {
-      toast.success("OAuth provider unlinked successfully");
-      utils.oauth.list.invalidate();
-    },
-    onError: (error) => {
-      toast.error(error.message);
-    },
-  });
-
-  const handleLink = (provider: "google" | "microsoft") => {
-    // Redirect to OAuth flow
-    window.location.href = `/api/auth/${provider}`;
-  };
-
-  const handleUnlink = (provider: "google" | "microsoft" | "apple") => {
-    if (confirm(`Are you sure you want to unlink your ${provider} account?`)) {
-      unlinkMutation.mutate({ provider });
-    }
-  };
-
-  const getProviderInfo = (provider: string) => {
-    switch (provider) {
-      case "google":
-        return { name: "Google", color: "text-red-600" };
-      case "microsoft":
-        return { name: "Microsoft", color: "text-blue-600" };
-      case "apple":
-        return { name: "Apple", color: "text-gray-800" };
-      default:
-        return { name: provider, color: "text-gray-600" };
-    }
-  };
-
-  const linkedProviders = new Set(oauthAccounts?.map(acc => acc.provider) || []);
-  const availableProviders: Array<"google" | "microsoft"> = ["google", "microsoft"];
+function BusinessTypeSelect({ initialValue }: { initialValue?: string }) {
+  const [value, setValue] = useState(initialValue || "");
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Shield className="h-5 w-5" />
-          Connected Accounts
-        </CardTitle>
-        <CardDescription>
-          Link OAuth providers to sign in with multiple accounts
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        {isLoading ? (
-          <div className="flex items-center justify-center py-8">
-            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {/* Linked accounts */}
-            {oauthAccounts && oauthAccounts.length > 0 && (
-              <div className="space-y-2">
-                <p className="text-sm font-medium text-muted-foreground">Linked Accounts</p>
-                {oauthAccounts.map((account) => {
-                  const info = getProviderInfo(account.provider);
-                  return (
-                    <div
-                      key={account.id}
-                      className="flex items-center justify-between p-3 border rounded-lg bg-muted/30"
-                    >
-                      <div className="flex items-center gap-3">
-                        <LinkIcon className={`h-5 w-5 ${info.color}`} />
-                        <div>
-                          <p className="font-medium">{info.name}</p>
-                          <p className="text-sm text-muted-foreground">{account.providerEmail}</p>
-                        </div>
-                      </div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleUnlink(account.provider)}
-                        disabled={unlinkMutation.isPending}
-                      >
-                        <Unlink className="h-4 w-4 mr-1" />
-                        Unlink
-                      </Button>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-
-            {/* Available providers to link */}
-            {availableProviders.filter(p => !linkedProviders.has(p)).length > 0 && (
-              <div className="space-y-2">
-                <p className="text-sm font-medium text-muted-foreground mt-4">
-                  Available to Link
-                </p>
-                {availableProviders
-                  .filter(p => !linkedProviders.has(p))
-                  .map((provider) => {
-                    const info = getProviderInfo(provider);
-                    return (
-                      <div
-                        key={provider}
-                        className="flex items-center justify-between p-3 border rounded-lg"
-                      >
-                        <div className="flex items-center gap-3">
-                          <LinkIcon className={`h-5 w-5 ${info.color}`} />
-                          <p className="font-medium">{info.name}</p>
-                        </div>
-                        <Button
-                          variant="default"
-                          size="sm"
-                          onClick={() => handleLink(provider)}
-                        >
-                          <LinkIcon className="h-4 w-4 mr-1" />
-                          Link Account
-                        </Button>
-                      </div>
-                    );
-                  })}
-              </div>
-            )}
-
-            {oauthAccounts && oauthAccounts.length === 0 && (
-              <p className="text-sm text-muted-foreground text-center py-4">
-                No OAuth accounts linked. Link an account to enable single sign-on.
-              </p>
-            )}
-          </div>
-        )}
-      </CardContent>
-    </Card>
+    <div>
+      <Select value={value} onValueChange={(v) => setValue(v)}>
+        <SelectTrigger className="w-full">
+          <SelectValue>
+            {value ? value : <span className="text-muted-foreground">Select a type...</span>}
+          </SelectValue>
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="tour_operator">Tour Operator</SelectItem>
+          <SelectItem value="hotel">Hotel / Accommodation</SelectItem>
+          <SelectItem value="restaurant">Restaurant</SelectItem>
+          <SelectItem value="activity_provider">Activity Provider</SelectItem>
+          <SelectItem value="rental">Equipment Rental</SelectItem>
+          <SelectItem value="other">Other</SelectItem>
+        </SelectContent>
+      </Select>
+      <input type="hidden" name="type" value={value} />
+    </div>
   );
 }
 
 export default function Settings() {
   const { data: business, isLoading } = trpc.business.get.useQuery();
+  const router = useRouter();
   const utils = trpc.useUtils();
   const [logoUrl, setLogoUrl] = useState<string>("");
   const [primaryColor, setPrimaryColor] = useState<string>("#2563eb");
@@ -158,8 +50,12 @@ export default function Settings() {
   // Update state when business data loads
   useEffect(() => {
     if (business) {
+      // Sync initial values from business into local state on mount
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setPrimaryColor(business.primaryColor || "#2563eb");
+       
       setSecondaryColor(business.secondaryColor || "#1e40af");
+       
       setTheme(business.theme || "light");
     }
   }, [business]);
@@ -180,7 +76,7 @@ export default function Settings() {
 
     updateBusinessMutation.mutate({
       name: formData.get("name") as string,
-      type: formData.get("type") as any,
+  type: formData.get("type") as "tour_operator" | "hotel" | "restaurant" | "activity_provider" | "rental" | "other",
       description: formData.get("description") as string,
       location: formData.get("location") as string,
       address: formData.get("address") as string,
@@ -223,7 +119,8 @@ export default function Settings() {
   }
 
   return (
-    <div className="space-y-6">
+    <PageWrapper>
+      <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold">Settings</h1>
         <p className="text-muted-foreground">Manage your business profile and preferences</p>
@@ -261,41 +158,23 @@ export default function Settings() {
             />
             <div>
               <label className="block text-sm font-medium mb-2">Business Name *</label>
-              <input
+              <Input
                 type="text"
                 name="name"
                 required
                 defaultValue={business.name}
-                className="w-full px-3 py-2 border rounded-md"
+                className="w-full"
               />
             </div>
 
             <div>
               <label className="block text-sm font-medium mb-2">Business Type *</label>
-              <select
-                name="type"
-                required
-                defaultValue={business.type}
-                className="w-full px-3 py-2 border rounded-md"
-              >
-                <option value="tour_operator">Tour Operator</option>
-                <option value="hotel">Hotel / Accommodation</option>
-                <option value="restaurant">Restaurant</option>
-                <option value="activity_provider">Activity Provider</option>
-                <option value="rental">Equipment Rental</option>
-                <option value="other">Other</option>
-              </select>
+              <BusinessTypeSelect initialValue={business.type} />
             </div>
 
             <div>
               <label className="block text-sm font-medium mb-2">Description</label>
-              <textarea
-                name="description"
-                rows={4}
-                defaultValue={business.description || ""}
-                className="w-full px-3 py-2 border rounded-md"
-                placeholder="Tell customers about your business..."
-              />
+              <Textarea name="description" rows={4} defaultValue={business.description || ""} placeholder="Tell customers about your business..." />
             </div>
 
             <div className="grid md:grid-cols-2 gap-4">
@@ -304,11 +183,11 @@ export default function Settings() {
                   <MapPin className="h-4 w-4" />
                   Location
                 </label>
-                <input
+                <Input
                   type="text"
                   name="location"
                   defaultValue={business.location || ""}
-                  className="w-full px-3 py-2 border rounded-md"
+                  className="w-full"
                   placeholder="Kalispell, MT"
                 />
               </div>
@@ -318,11 +197,11 @@ export default function Settings() {
                   <Phone className="h-4 w-4" />
                   Phone
                 </label>
-                <input
+                <Input
                   type="tel"
                   name="phone"
                   defaultValue={business.phone || ""}
-                  className="w-full px-3 py-2 border rounded-md"
+                  className="w-full"
                   placeholder="(406) 555-0123"
                 />
               </div>
@@ -330,11 +209,11 @@ export default function Settings() {
 
             <div>
               <label className="block text-sm font-medium mb-2">Full Address</label>
-              <input
+              <Input
                 type="text"
                 name="address"
                 defaultValue={business.address || ""}
-                className="w-full px-3 py-2 border rounded-md"
+                className="w-full"
                 placeholder="123 Main St, Kalispell, MT 59901"
               />
             </div>
@@ -345,11 +224,11 @@ export default function Settings() {
                   <Mail className="h-4 w-4" />
                   Email
                 </label>
-                <input
+                <Input
                   type="email"
                   name="email"
                   defaultValue={business.email || ""}
-                  className="w-full px-3 py-2 border rounded-md"
+                  className="w-full"
                   placeholder="contact@yourbusiness.com"
                 />
               </div>
@@ -359,11 +238,11 @@ export default function Settings() {
                   <Globe className="h-4 w-4" />
                   Website
                 </label>
-                <input
+                <Input
                   type="url"
                   name="website"
                   defaultValue={business.website || ""}
-                  className="w-full px-3 py-2 border rounded-md"
+                  className="w-full"
                   placeholder="https://yourbusiness.com"
                 />
               </div>
@@ -371,11 +250,11 @@ export default function Settings() {
 
             <div>
               <label className="block text-sm font-medium mb-2">Vercel API Token (Optional)</label>
-              <input
+              <Input
                 type="password"
                 name="vercelToken"
                 defaultValue={business.vercelToken || ""}
-                className="w-full px-3 py-2 border rounded-md font-mono text-sm"
+                className="w-full font-mono text-sm"
                 placeholder="vercel_xxxxxxxxxxxxxxxxxxxxx"
               />
               <p className="text-xs text-muted-foreground mt-1">
@@ -415,20 +294,21 @@ export default function Settings() {
                 <label className="block text-sm font-medium mb-2">Primary Brand Color</label>
                 <div className="flex items-center gap-3">
                   <input
-                    type="color"
-                    value={primaryColor}
-                    onChange={(e) => setPrimaryColor(e.target.value)}
-                    className="h-12 w-20 rounded border cursor-pointer"
-                  />
-                  <div className="flex-1">
-                    <input
-                      type="text"
+                      aria-label="Primary brand color"
+                      type="color"
                       value={primaryColor}
                       onChange={(e) => setPrimaryColor(e.target.value)}
-                      className="w-full px-3 py-2 border rounded-md font-mono text-sm"
-                      placeholder="#2563eb"
-                      pattern="^#[0-9A-Fa-f]{6}$"
+                      className="h-12 w-20 rounded border cursor-pointer"
                     />
+                  <div className="flex-1">
+                        <Input
+                          type="text"
+                          value={primaryColor}
+                          onChange={(e) => setPrimaryColor(e.target.value)}
+                          className="w-full font-mono text-sm"
+                          placeholder="#2563eb"
+                          pattern="^#[0-9A-Fa-f]{6}$"
+                        />
                     <p className="text-xs text-muted-foreground mt-1">
                       Main brand color used for buttons and headers
                     </p>
@@ -440,17 +320,18 @@ export default function Settings() {
                 <label className="block text-sm font-medium mb-2">Secondary Accent Color</label>
                 <div className="flex items-center gap-3">
                   <input
+                    aria-label="Secondary accent color"
                     type="color"
                     value={secondaryColor}
                     onChange={(e) => setSecondaryColor(e.target.value)}
                     className="h-12 w-20 rounded border cursor-pointer"
                   />
                   <div className="flex-1">
-                    <input
+                    <Input
                       type="text"
                       value={secondaryColor}
                       onChange={(e) => setSecondaryColor(e.target.value)}
-                      className="w-full px-3 py-2 border rounded-md font-mono text-sm"
+                      className="w-full font-mono text-sm"
                       placeholder="#1e40af"
                       pattern="^#[0-9A-Fa-f]{6}$"
                     />
@@ -465,28 +346,32 @@ export default function Settings() {
             <div>
               <label className="block text-sm font-medium mb-2">Theme</label>
               <div className="flex gap-4">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="radio"
-                    name="theme"
-                    value="light"
-                    checked={theme === "light"}
-                    onChange={(e) => setTheme(e.target.value as "light" | "dark")}
-                    className="w-4 h-4"
-                  />
-                  <span>Light</span>
-                </label>
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="radio"
-                    name="theme"
-                    value="dark"
-                    checked={theme === "dark"}
-                    onChange={(e) => setTheme(e.target.value as "light" | "dark")}
-                    className="w-4 h-4"
-                  />
-                  <span>Dark</span>
-                </label>
+                <div className="flex items-center gap-3">
+                  <label className={`flex items-center gap-2 cursor-pointer rounded-md px-3 py-1 ${theme === 'light' ? 'bg-accent/10' : ''}`}>
+                    <input
+                      aria-label="Theme light option"
+                      type="radio"
+                      name="theme"
+                      value="light"
+                      checked={theme === "light"}
+                      onChange={(e) => setTheme(e.target.value as "light" | "dark")}
+                      className="w-4 h-4"
+                    />
+                    <span>Light</span>
+                  </label>
+                  <label className={`flex items-center gap-2 cursor-pointer rounded-md px-3 py-1 ${theme === 'dark' ? 'bg-accent/10' : ''}`}>
+                    <input
+                      aria-label="Theme dark option"
+                      type="radio"
+                      name="theme"
+                      value="dark"
+                      checked={theme === "dark"}
+                      onChange={(e) => setTheme(e.target.value as "light" | "dark")}
+                      className="w-4 h-4"
+                    />
+                    <span>Dark</span>
+                  </label>
+                </div>
               </div>
               <p className="text-xs text-muted-foreground mt-1">
                 Choose the overall theme for your public booking site
@@ -499,20 +384,14 @@ export default function Settings() {
                 Preview
               </p>
               <div className="space-y-3">
-                <button
-                  type="button"
-                  className="px-6 py-2 rounded-lg font-semibold text-white"
-                  style={{ backgroundColor: primaryColor }}
-                >
-                  Primary Button
-                </button>
-                <button
-                  type="button"
-                  className="px-6 py-2 rounded-lg font-semibold text-white"
-                  style={{ backgroundColor: secondaryColor }}
-                >
-                  Secondary Button
-                </button>
+                <div className="flex gap-2">
+                  <Button type="button" style={{ backgroundColor: primaryColor }} className="px-6 py-2 rounded-lg font-semibold text-white">
+                    Primary Button
+                  </Button>
+                  <Button type="button" style={{ backgroundColor: secondaryColor }} className="px-6 py-2 rounded-lg font-semibold text-white">
+                    Secondary Button
+                  </Button>
+                </div>
               </div>
             </div>
 
@@ -541,7 +420,13 @@ export default function Settings() {
                   Status: <span className="capitalize">{business.subscriptionStatus}</span>
                 </p>
               </div>
-              <Button variant="outline" onClick={() => window.location.href = '/subscription'}>
+              <Button variant="outline" onClick={() => {
+                try {
+                  router.push('/subscription');
+                } catch (e) {
+                  if (typeof window !== 'undefined') window.location.href = '/subscription';
+                }
+              }}>
                 Upgrade Plan
               </Button>
             </div>
@@ -551,6 +436,7 @@ export default function Settings() {
           </div>
         </CardContent>
       </Card>
-    </div>
+      </div>
+    </PageWrapper>
   );
 }

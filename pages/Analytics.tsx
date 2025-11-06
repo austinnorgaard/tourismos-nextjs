@@ -9,7 +9,8 @@ import {
   MapPin,
   UserCheck
 } from "lucide-react";
-import { Streamdown } from "streamdown";
+import dynamic from 'next/dynamic';
+const Streamdown = dynamic(() => import('streamdown').then((m) => m.Streamdown), { ssr: false });
 import { DashboardSkeleton } from "@/components/Skeletons";
 import { InlineError } from "@/components/ErrorFallback";
 
@@ -36,8 +37,8 @@ export default function Analytics() {
   }
 
   // Calculate additional metrics
-  const recentBookings = bookings?.filter(b => {
-    const bookingDate = new Date(b.createdAt);
+  const recentBookings = bookings?.filter(booking => {
+    const bookingDate = new Date(booking.createdAt);
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
     return bookingDate >= thirtyDaysAgo;
@@ -196,11 +197,11 @@ export default function Analytics() {
                 {(() => {
                   // Extract locations from bookings (mock data for demo)
                   const locationCounts = new Map<string, number>();
-                  bookings?.forEach(b => {
-                    // In production, extract from customer data
-                    const locations = ['Kalispell, MT', 'Whitefish, MT', 'Missoula, MT', 'Bozeman, MT', 'Great Falls, MT'];
-                    const randomLocation = locations[Math.floor(Math.random() * locations.length)];
-                    locationCounts.set(randomLocation, (locationCounts.get(randomLocation) || 0) + 1);
+                  // Deterministic selection based on index to avoid impure calls during render
+                  const locations = ['Kalispell, MT', 'Whitefish, MT', 'Missoula, MT', 'Bozeman, MT', 'Great Falls, MT'];
+                  bookings?.forEach((b, idx) => {
+                    const selected = locations[idx % locations.length];
+                    locationCounts.set(selected, (locationCounts.get(selected) || 0) + 1);
                   });
                   
                   const sortedLocations = Array.from(locationCounts.entries())

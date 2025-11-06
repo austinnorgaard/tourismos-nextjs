@@ -76,6 +76,7 @@ export function ImageUpload({ currentImage, onImageChange, label = "Upload Image
       
       {previewUrl ? (
         <div className="relative inline-block">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={previewUrl}
             alt="Preview"

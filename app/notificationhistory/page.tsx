@@ -117,7 +117,7 @@ export default function NotificationHistory() {
             <Bell className="h-16 w-16 text-muted-foreground mb-4" />
             <CardTitle className="mb-2">No notifications yet</CardTitle>
             <CardDescription>
-              You'll see notifications here when you receive bookings, payments, and other updates
+              You&apos;ll see notifications here when you receive bookings, payments, and other updates
             </CardDescription>
           </CardContent>
         </Card>

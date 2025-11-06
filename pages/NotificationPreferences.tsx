@@ -1,3 +1,4 @@
+"use client";
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -24,12 +25,14 @@ export default function NotificationPreferences() {
   });
 
   const [pushSupported] = useState(() => {
+    if (typeof window === 'undefined') return false;
     return "Notification" in window && "serviceWorker" in navigator && "PushManager" in window;
   });
 
   const [pushPermission, setPushPermission] = useState(() => {
-    if (!pushSupported) return "unsupported";
-    return Notification.permission;
+    if (typeof window === 'undefined') return "unsupported";
+    if (!("Notification" in window)) return "unsupported";
+    return (Notification as any).permission ?? "default";
   });
 
   const handleToggle = (category: "email" | "push", type: keyof typeof preferences.email) => {
@@ -168,7 +171,7 @@ export default function NotificationPreferences() {
                   <p className="font-medium mb-2">Enable push notifications</p>
                   <p className="text-muted-foreground mb-4">
                     Get instant notifications about bookings, payments, and important updates even
-                    when you're not on the site.
+                    when you&apos;re not on the site.
                   </p>
                   <Button onClick={handleEnablePush} size="sm">
                     Enable Push Notifications

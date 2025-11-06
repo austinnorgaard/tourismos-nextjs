@@ -13,7 +13,7 @@ cp .env.local .env.production
 # Edit .env.production with your values
 
 # Run development server
-pnpm dev
+pnpm dev 
 
 # Open http://localhost:3000
 ```

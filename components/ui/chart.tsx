@@ -102,32 +102,7 @@ ${colorConfig
 
 const ChartTooltip = RechartsPrimitive.Tooltip;
 
-type ChartPayloadItem = {
-  dataKey?: string | number;
-  name?: string;
-  value?: number | string;
-  type?: string;
-  payload?: Record<string, unknown> & { fill?: string };
-  color?: string;
-};
-
-type ChartPayload = ChartPayloadItem[];
-
-function ChartTooltipContent(props: {
-  active?: boolean;
-  payload?: ChartPayload | null;
-  className?: string;
-  indicator?: "line" | "dot" | "dashed";
-  hideLabel?: boolean;
-  hideIndicator?: boolean;
-  label?: string | React.ReactNode;
-  labelFormatter?: (value: unknown, payload?: ChartPayload) => React.ReactNode;
-  labelClassName?: string;
-  formatter?: (value: unknown, name?: string, item?: ChartPayloadItem, index?: number, payload?: ChartPayloadItem) => React.ReactNode;
-  color?: string;
-  nameKey?: string;
-  labelKey?: string;
-}) {
+function ChartTooltipContent(props: any) {
   const {
     active,
     payload,
@@ -149,7 +124,8 @@ function ChartTooltipContent(props: {
     if (hideLabel || !payload?.length) {
       return null;
     }
-    const [item] = payload as ChartPayload;
+
+    const [item] = payload;
     const key = `${labelKey || item?.dataKey || item?.name || "value"}`;
     const itemConfig = getPayloadConfigFromPayload(config, item, key);
     const value =
@@ -196,11 +172,11 @@ function ChartTooltipContent(props: {
       {!nestLabel ? tooltipLabel : null}
       <div className="grid gap-1.5">
         {payload
-          .filter((item) => item.type !== "none")
+          .filter(item => item.type !== "none")
           .map((item, index) => {
-                const key = `${nameKey || item.name || item.dataKey || "value"}`;
-                const itemConfig = getPayloadConfigFromPayload(config, item, key);
-                const indicatorColor = color || item.payload?.fill || item.color;
+            const key = `${nameKey || item.name || item.dataKey || "value"}`;
+            const itemConfig = getPayloadConfigFromPayload(config, item, key);
+            const indicatorColor = color || item.payload.fill || item.color;
 
             return (
               <div
@@ -210,8 +186,8 @@ function ChartTooltipContent(props: {
                   indicator === "dot" && "items-center"
                 )}
               >
-                    {formatter && item?.value !== undefined && item.name ? (
-                  formatter(item.value, item.name, item, index, item.payload as ChartPayloadItem)
+                {formatter && item?.value !== undefined && item.name ? (
+                  formatter(item.value, item.name, item, index, item.payload)
                 ) : (
                   <>
                     {itemConfig?.icon ? (
@@ -268,7 +244,7 @@ function ChartTooltipContent(props: {
 
 const ChartLegend = RechartsPrimitive.Legend;
 
-function ChartLegendContent(props: { className?: string; hideIcon?: boolean; payload?: ChartPayload; verticalAlign?: string; nameKey?: string }) {
+function ChartLegendContent(props: any) {
   const { className, hideIcon = false, payload, verticalAlign = "bottom", nameKey } = props;
   const { config } = useChart();
 

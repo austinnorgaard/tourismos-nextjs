@@ -1,6 +1,9 @@
 'use client';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { trpc } from "@/lib/trpc";
 import { DollarSign, Plus, Pencil, Trash2 } from "lucide-react";
@@ -97,6 +100,29 @@ export default function Offerings() {
           )}
         </DialogContent>
       </Dialog>
+    </div>
+  );
+}
+
+function OfferingTypeSelect({ initialValue }: { initialValue?: string | null }) {
+  const [value, setValue] = useState(initialValue || "");
+
+  return (
+    <div>
+      <Select value={value} onValueChange={(v) => setValue(v)}>
+        <SelectTrigger className="w-full">
+          <SelectValue>{value ? value : <span className="text-muted-foreground">Select a type...</span>}</SelectValue>
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="tour">Tour</SelectItem>
+          <SelectItem value="activity">Activity</SelectItem>
+          <SelectItem value="accommodation">Accommodation</SelectItem>
+          <SelectItem value="rental">Rental</SelectItem>
+          <SelectItem value="experience">Experience</SelectItem>
+          <SelectItem value="other">Other</SelectItem>
+        </SelectContent>
+      </Select>
+      <input type="hidden" name="type" value={value} />
     </div>
   );
 }
@@ -276,68 +302,49 @@ function OfferingForm({ offering, onSuccess }: { offering?: Offering; onSuccess:
       />
       <div>
         <label className="block text-sm font-medium mb-2">Name *</label>
-        <input
+        <Input
           type="text"
           name="name"
           required
           defaultValue={offering?.name}
-          className="w-full px-3 py-2 border rounded-md"
+          className="w-full"
           placeholder="Glacier Hiking Tour"
         />
       </div>
 
       <div>
         <label className="block text-sm font-medium mb-2">Type *</label>
-        <select
-          name="type"
-          required
-          defaultValue={offering?.type}
-          className="w-full px-3 py-2 border rounded-md"
-        >
-          <option value="">Select a type...</option>
-          <option value="tour">Tour</option>
-          <option value="activity">Activity</option>
-          <option value="accommodation">Accommodation</option>
-          <option value="rental">Rental</option>
-          <option value="experience">Experience</option>
-          <option value="other">Other</option>
-        </select>
+        <OfferingTypeSelect initialValue={offering?.type} />
       </div>
 
       <div>
         <label className="block text-sm font-medium mb-2">Description</label>
-        <textarea
-          name="description"
-          rows={3}
-          defaultValue={offering?.description ?? undefined}
-          className="w-full px-3 py-2 border rounded-md"
-          placeholder="Describe your offering..."
-        />
+        <Textarea name="description" rows={3} defaultValue={offering?.description ?? undefined} placeholder="Describe your offering..." />
       </div>
 
       <div className="grid md:grid-cols-2 gap-4">
         <div>
           <label className="block text-sm font-medium mb-2">Price (USD) *</label>
-            <input
+            <Input
               type="number"
               name="price"
               required
               step="0.01"
               min="0"
               defaultValue={offering && typeof offering.price === 'number' ? (offering.price / 100).toFixed(2) : ''}
-              className="w-full px-3 py-2 border rounded-md"
+              className="w-full"
               placeholder="99.99"
             />
         </div>
 
         <div>
           <label className="block text-sm font-medium mb-2">Duration (minutes)</label>
-            <input
+            <Input
               type="number"
               name="durationMinutes"
               min="0"
               defaultValue={typeof offering?.durationMinutes === 'number' ? offering.durationMinutes : undefined}
-              className="w-full px-3 py-2 border rounded-md"
+              className="w-full"
               placeholder="120"
             />
         </div>
@@ -346,23 +353,23 @@ function OfferingForm({ offering, onSuccess }: { offering?: Offering; onSuccess:
       <div className="grid md:grid-cols-2 gap-4">
         <div>
           <label className="block text-sm font-medium mb-2">Capacity (people)</label>
-            <input
+            <Input
               type="number"
               name="capacity"
               min="1"
               defaultValue={typeof offering?.capacity === 'number' ? offering.capacity : undefined}
-              className="w-full px-3 py-2 border rounded-md"
+              className="w-full"
               placeholder="10"
             />
         </div>
 
         <div>
           <label className="block text-sm font-medium mb-2">Location</label>
-            <input
+            <Input
               type="text"
               name="location"
               defaultValue={offering?.location ?? undefined}
-              className="w-full px-3 py-2 border rounded-md"
+              className="w-full"
               placeholder="Glacier National Park"
             />
         </div>

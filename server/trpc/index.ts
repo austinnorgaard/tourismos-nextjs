@@ -657,7 +657,7 @@ Format your response as JSON with "subject" and "body" fields.`;
     generateSocialPost: protectedProcedure
       .input(z.object({
         topic: z.string(),
-        platform: z.enum(["facebook", "instagram", "twitter"]),
+        platform: z.enum(["facebook", "instagram", "twitter", "linkedin"]),
       }))
       .mutation(async ({ input }) => {
         const platformGuidelines = {

@@ -1,27 +1,183 @@
+/*
+  The CSS in this file intentionally uses Tailwind/PostCSS directives
+  such as @tailwind, @layer and @apply. Some editors and stylelint
+  configurations flag these as unknown at-rules. Disable the
+  `at-rule-no-unknown` rule so editor linting does not produce false
+  positives. These directives are processed by Tailwind/PostCSS at
+  build time and must remain in the file.
+*/
+/* stylelint-disable at-rule-no-unknown */
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/*
+  Ported/adapted from the attached project's CSS to provide a matching
+  set of CSS variables, dark theme tokens, base resets and a responsive
+  container utility used across the app and legacy pages.
+*/
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Montana sky blue theme (light) */
+  --primary: 210 79% 58%;
+  --primary-foreground: 0 0% 100%;
+  --sidebar-primary: 210 79% 58%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --chart-1: 205 80% 70%;
+  --chart-2: 210 75% 60%;
+  --chart-3: 210 60% 48%;
+  --chart-4: 210 50% 40%;
+  --chart-5: 210 40% 30%;
+  --radius: 0.65rem;
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.235 0.015 65);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.235 0.015 65);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.235 0.015 65);
+  --secondary: oklch(0.98 0.001 286.375);
+  --secondary-foreground: oklch(0.4 0.015 65);
+  --muted: oklch(0.967 0.001 286.375);
+  --muted-foreground: oklch(0.552 0.016 285.938);
+  --accent: oklch(0.967 0.001 286.375);
+  --accent-foreground: oklch(0.141 0.005 285.823);
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(0.985 0 0);
+  --border: oklch(0.92 0.004 286.32);
+  --input: oklch(0.92 0.004 286.32);
+  --ring: oklch(0.623 0.214 259.815);
+  --sidebar: oklch(0.985 0 0);
+  --sidebar-foreground: oklch(0.235 0.015 65);
+  --sidebar-accent: oklch(0.967 0.001 286.375);
+  --sidebar-accent-foreground: oklch(0.141 0.005 285.823);
+  --sidebar-border: oklch(0.92 0.004 286.32);
+  --sidebar-ring: oklch(0.623 0.214 259.815);
+
+  /* Convenience aliases for older code in the project */
+  --background-base: var(--background);
+  --foreground-base: var(--foreground);
+  /* Color aliases (compat) */
+  --color-primary: oklch(var(--primary));
+  --color-foreground: oklch(var(--foreground));
+  --color-background: oklch(var(--background));
+  --color-card: oklch(var(--card));
+  --color-muted: oklch(var(--muted));
+
+  /* Radius aliases */
+  --radius-sm: calc(var(--radius) / 2);
+  --radius-md: var(--radius);
+  --radius-lg: calc(var(--radius) * 1.5);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+.dark {
+  /* Montana sky blue theme (dark) */
+  --primary: 210 79% 58%;
+  --primary-foreground: 0 0% 100%;
+  --sidebar-primary: 210 79% 58%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --background: oklch(0.141 0.005 285.823);
+  --foreground: oklch(0.85 0.005 65);
+  --card: oklch(0.21 0.006 285.885);
+  --card-foreground: oklch(0.85 0.005 65);
+  --popover: oklch(0.21 0.006 285.885);
+  --popover-foreground: oklch(0.85 0.005 65);
+  --secondary: oklch(0.24 0.006 286.033);
+  --secondary-foreground: oklch(0.7 0.005 65);
+  --muted: oklch(0.274 0.006 286.033);
+  --muted-foreground: oklch(0.705 0.015 286.067);
+  --accent: oklch(0.274 0.006 286.033);
+  --accent-foreground: oklch(0.92 0.005 65);
+  --destructive: oklch(0.704 0.191 22.216);
+  --destructive-foreground: oklch(0.985 0 0);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.488 0.243 264.376);
+  --chart-1: var(--color-blue-300);
+  --chart-2: var(--color-blue-500);
+  --chart-3: var(--color-blue-600);
+  --chart-4: var(--color-blue-700);
+  --chart-5: var(--color-blue-800);
+  --sidebar: oklch(0.21 0.006 285.885);
+  --sidebar-foreground: oklch(0.85 0.005 65);
+  --sidebar-accent: oklch(0.274 0.006 286.033);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.488 0.243 264.376);
+}
+
+@layer base {
+  /* Apply accessible defaults across elements */
+  *, *::before, *::after {
+    box-sizing: border-box;
+  }
+
+  html, body, #__next {
+    height: 100%;
+  }
+
+  body {
+    font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    background: var(--background);
+    color: var(--foreground);
+    margin: 0;
+    line-height: 1.4;
+  }
+
+  /* Small base applies to match legacy project's reset */
+  /* The following global @apply rules were removed because some editors
+    and linters flag @apply as an unknown at-rule when not processed by
+    Tailwind/PostCSS. The same effects are achieved elsewhere in the
+    stylesheet (body background/color set explicitly) and component
+    primitives use the CSS variables defined above for borders/rings.
+  */
+
+  /* Border/ring tokens used by component primitives */
+  * {
+    --border: var(--border);
+    --ring: var(--ring);
+  }
+
+  /* Make interactive controls use pointer cursor where applicable */
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  [type="button"]:not(:disabled),
+  [type="submit"]:not(:disabled),
+  a[href],
+  select:not(:disabled),
+  input[type="checkbox"]:not(:disabled),
+  input[type="radio"]:not(:disabled) {
+    cursor: pointer;
   }
 }
 
-body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
-}
+@layer components {
+  /* A simple responsive container used across the UI */
+  .container {
+    width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 1rem; /* 16px - mobile */
+    padding-right: 1rem;
+  }
 
-@layer utilities {
-  .text-balance {
-    text-wrap: balance;
+  .flex {
+    min-height: 0;
+    min-width: 0;
+  }
+
+  @media (min-width: 640px) {
+    .container { padding-left: 1.5rem; padding-right: 1.5rem; }
+  }
+
+  @media (min-width: 1024px) {
+    .container { padding-left: 2rem; padding-right: 2rem; max-width: 1280px; }
   }
 }
+
+/* small utility kept from earlier file */
+.text-balance { text-wrap: balance; }
+
+/* Re-enable stylelint rules for the remainder of the workspace files */
+/* stylelint-enable at-rule-no-unknown */

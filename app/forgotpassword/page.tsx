@@ -8,6 +8,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
 import Image from "next/image";
+import PageWrapper from "@/components/PageWrapper";
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState("");
@@ -42,11 +43,11 @@ export default function ForgotPassword() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-slate-50 to-blue-50">
+    <PageWrapper className="flex items-center justify-center p-4 bg-gradient-to-br from-slate-50 to-blue-50">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           {APP_LOGO && (
-            <Image src={APP_LOGO} alt={APP_TITLE} className="h-12 mx-auto mb-4" />
+            <Image src={APP_LOGO} alt={APP_TITLE} width={48} height={48} className="h-12 mx-auto mb-4" />
           )}
           <h1 className="text-3xl font-bold text-slate-900">{APP_TITLE}</h1>
         </div>
@@ -103,6 +104,6 @@ export default function ForgotPassword() {
           </CardContent>
         </Card>
       </div>
-    </div>
+    </PageWrapper>
   );
 }

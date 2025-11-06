@@ -5,7 +5,10 @@ import { trpc } from "@/lib/trpc";
 import { Bot, Plus, Trash2, MessageSquare, Code } from "lucide-react";
 import { toast } from "sonner";
 import { useState } from "react";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import dynamic from 'next/dynamic';
+import PageWrapper from "@/components/PageWrapper";
 const Streamdown = dynamic(() => import('streamdown').then((m) => m.Streamdown), { ssr: false });
 
 export default function Chatbot() {
@@ -47,7 +50,8 @@ export default function Chatbot() {
   };
 
   return (
-    <div className="space-y-6">
+    <PageWrapper className="">
+      <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold">AI Chatbot</h1>
         <p className="text-muted-foreground">Configure your AI assistant and knowledge base</p>
@@ -113,13 +117,13 @@ export default function Chatbot() {
 
               {/* Input */}
               <div className="flex gap-2">
-                <input
+                <Input
                   type="text"
                   value={testMessage}
                   onChange={(e) => setTestMessage(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && handleTestMessage()}
                   placeholder="Ask a question..."
-                  className="flex-1 px-3 py-2 border rounded-md"
+                  className="flex-1"
                   disabled={sendMessageMutation.isPending}
                 />
                 <Button
@@ -176,7 +180,8 @@ export default function Chatbot() {
           </p>
         </CardContent>
       </Card>
-    </div>
+      </div>
+    </PageWrapper>
   );
 }
 
@@ -271,21 +276,21 @@ function KnowledgeBaseManager() {
                 <form onSubmit={handleSubmit} className="space-y-3 p-4 border rounded-lg">
                   <div>
                     <label className="block text-sm font-medium mb-1">Category (optional)</label>
-                    <input
+                    <Input
                       type="text"
                       name="category"
-                      className="w-full px-3 py-2 border rounded-md text-sm"
+                      className="w-full"
                       placeholder="FAQ, Policies, etc."
                     />
                   </div>
                   <div>
                     <label className="block text-sm font-medium mb-1">Content *</label>
-                    <textarea
+                    <Textarea
                       name="content"
                       required
                       rows={3}
-                      className="w-full px-3 py-2 border rounded-md text-sm"
-                      placeholder="Add information about your business, policies, offerings, etc."
+                      className="text-sm"
+                      placeholder="Add information about your business, policies, offerings, etc." 
                     />
                   </div>
                   <div className="flex gap-2">

@@ -6,6 +6,7 @@ import { APP_LOGO, APP_TITLE } from "@/const";
 import { useState } from "react";
 import Link from 'next/link';
 import { toast } from "sonner";
+import PageWrapper from "@/components/PageWrapper";
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState("");
@@ -39,7 +40,7 @@ export default function ForgotPassword() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-slate-50 to-blue-50">
+    <PageWrapper className="flex items-center justify-center p-4 bg-gradient-to-br from-slate-50 to-blue-50">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           {APP_LOGO && (
@@ -101,6 +102,6 @@ export default function ForgotPassword() {
           </CardContent>
         </Card>
       </div>
-    </div>
+    </PageWrapper>
   );
 }

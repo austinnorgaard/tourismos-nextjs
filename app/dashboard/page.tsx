@@ -1,5 +1,7 @@
 'use client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { trpc } from "@/lib/trpc";
 import { 
   Calendar, 
@@ -84,22 +86,27 @@ export default function Dashboard() {
           ) : (
             <div className="space-y-3">
               {todayBookings.map((booking) => (
-                <div key={booking.id} className="flex items-center justify-between p-3 border rounded-lg">
-                  <div>
-                    <p className="font-medium">{booking.customerName}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {booking.bookingTime || 'Time not specified'} • Party of {booking.partySize}
-                    </p>
+                <div key={booking.id} className="flex items-center justify-between p-3 rounded-lg border bg-card">
+                  <div className="flex items-center gap-3">
+                    <Avatar>
+                      {booking.customerAvatarUrl ? (
+                        <AvatarImage src={booking.customerAvatarUrl} alt={booking.customerName} />
+                      ) : (
+                        <AvatarFallback>{booking.customerName?.[0] ?? "?"}</AvatarFallback>
+                      )}
+                    </Avatar>
+                    <div>
+                      <p className="font-medium">{booking.customerName}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {booking.bookingTime || "Time not specified"} • Party of {booking.partySize}
+                      </p>
+                    </div>
                   </div>
-                  <div className="text-right">
+                  <div className="text-right flex flex-col items-end gap-1">
                     <p className="font-medium">${(booking.totalAmount / 100).toFixed(2)}</p>
-                    <span className={`text-xs px-2 py-1 rounded-full ${
-                      booking.status === 'confirmed' ? 'bg-green-100 text-green-700' :
-                      booking.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
-                      'bg-gray-100 text-gray-700'
-                    }`}>
+                    <Badge variant={booking.status === 'confirmed' ? 'default' : booking.status === 'pending' ? 'secondary' : 'outline'}>
                       {booking.status}
-                    </span>
+                    </Badge>
                   </div>
                 </div>
               ))}

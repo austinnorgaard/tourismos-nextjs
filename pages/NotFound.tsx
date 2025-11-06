@@ -1,10 +1,14 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { AlertCircle, Home } from "lucide-react";
+import { useRouter } from 'next/navigation';
 export default function NotFound() {
+  const router = useRouter();
   const handleGoHome = () => {
-    if (typeof window !== 'undefined') {
-      window.location.href = '/';
+    try {
+      router.push('/');
+    } catch (e) {
+      if (typeof window !== 'undefined') window.location.href = '/';
     }
   };
 

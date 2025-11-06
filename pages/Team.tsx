@@ -146,7 +146,7 @@ export default function Team() {
                 <div>
                   <Label htmlFor="role">Role</Label>
                   <Select name="role" defaultValue="staff" required>
-                    <SelectTrigger>
+                    <SelectTrigger className="w-full">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>

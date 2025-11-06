@@ -7,6 +7,7 @@ import { APP_LOGO, APP_TITLE } from "@/const";
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
+import PageWrapper from "@/components/PageWrapper";
 
 export default function ResetPassword() {
   // token is read from the browser location search params
@@ -69,7 +70,7 @@ export default function ResetPassword() {
 
   if (!token) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-slate-50 to-blue-50">
+      <PageWrapper className="flex items-center justify-center p-4 bg-gradient-to-br from-slate-50 to-blue-50">
         <Card className="w-full max-w-md">
           <CardHeader>
             <CardTitle>Invalid Reset Link</CardTitle>
@@ -83,12 +84,12 @@ export default function ResetPassword() {
             </Link>
           </CardContent>
         </Card>
-      </div>
+      </PageWrapper>
     );
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-slate-50 to-blue-50">
+    <PageWrapper className="flex items-center justify-center p-4 bg-gradient-to-br from-slate-50 to-blue-50">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           {APP_LOGO && (
@@ -164,6 +165,6 @@ export default function ResetPassword() {
           </CardContent>
         </Card>
       </div>
-    </div>
+    </PageWrapper>
   );
 }

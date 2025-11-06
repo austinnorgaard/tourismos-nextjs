@@ -1,5 +1,6 @@
 "use client";
 import { useAuth } from "@/_core/hooks/useAuth";
+import { useAuthNavigate } from "@/_core/hooks/useAuthNavigate";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -63,7 +64,9 @@ export default function DashboardLayout({
       return DEFAULT_WIDTH;
     }
   });
-  const { loading, user } = useAuth();
+  const navigate = useAuthNavigate();
+  const { loading, user } = useAuth({ navigate });
+  const router = useRouter();
 
   useEffect(() => {
     if (typeof window === 'undefined' || typeof window.localStorage === 'undefined') return;
@@ -100,8 +103,10 @@ export default function DashboardLayout({
           </div>
           <Button
             onClick={() => {
-              if (typeof window !== 'undefined') {
-                window.location.href = "/auth";
+              try {
+                router.push('/auth');
+              } catch (e) {
+                if (typeof window !== 'undefined') window.location.href = '/auth';
               }
             }}
             size="lg"

@@ -1,6 +1,10 @@
 'use client';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+import { useId } from "react";
 import { trpc } from "@/lib/trpc";
 import { Building2, Mail, Phone, Globe, MapPin, Palette } from "lucide-react";
 import { Shield, Link as LinkIcon, Unlink } from "lucide-react";
@@ -8,6 +12,7 @@ import { toast } from "sonner";
 import { ImageUpload } from "@/components/ImageUpload";
 import { StripeConnectCard } from "@/components/StripeConnectCard";
 import { useState, useEffect } from "react";
+import { useRouter } from 'next/navigation';
 
 function OAuthAccountsCard() {
   const { data: oauthAccounts, isLoading } = trpc.oauth.list.useQuery();
@@ -145,7 +150,33 @@ function OAuthAccountsCard() {
   );
 }
 
+function BusinessTypeSelect({ initialValue }: { initialValue?: string }) {
+  const [value, setValue] = useState(initialValue || "");
+
+  return (
+    <div>
+      <Select value={value} onValueChange={(v) => setValue(v)}>
+        <SelectTrigger className="w-full">
+          <SelectValue>
+            {value ? value : <span className="text-muted-foreground">Select a type...</span>}
+          </SelectValue>
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="tour_operator">Tour Operator</SelectItem>
+          <SelectItem value="hotel">Hotel / Accommodation</SelectItem>
+          <SelectItem value="restaurant">Restaurant</SelectItem>
+          <SelectItem value="activity_provider">Activity Provider</SelectItem>
+          <SelectItem value="rental">Equipment Rental</SelectItem>
+          <SelectItem value="other">Other</SelectItem>
+        </SelectContent>
+      </Select>
+      <input type="hidden" name="type" value={value} />
+    </div>
+  );
+}
+
 export default function Settings() {
+  const router = useRouter();
   const { data: business, isLoading } = trpc.business.get.useQuery();
   const utils = trpc.useUtils();
   const [logoUrl, setLogoUrl] = useState<string>("");
@@ -263,41 +294,23 @@ export default function Settings() {
             />
             <div>
               <label className="block text-sm font-medium mb-2">Business Name *</label>
-              <input
+              <Input
                 type="text"
                 name="name"
                 required
                 defaultValue={business.name}
-                className="w-full px-3 py-2 border rounded-md"
+                className="w-full"
               />
             </div>
 
             <div>
               <label className="block text-sm font-medium mb-2">Business Type *</label>
-              <select
-                name="type"
-                required
-                defaultValue={business.type}
-                className="w-full px-3 py-2 border rounded-md"
-              >
-                <option value="tour_operator">Tour Operator</option>
-                <option value="hotel">Hotel / Accommodation</option>
-                <option value="restaurant">Restaurant</option>
-                <option value="activity_provider">Activity Provider</option>
-                <option value="rental">Equipment Rental</option>
-                <option value="other">Other</option>
-              </select>
+              <BusinessTypeSelect initialValue={business.type} />
             </div>
 
             <div>
               <label className="block text-sm font-medium mb-2">Description</label>
-              <textarea
-                name="description"
-                rows={4}
-                defaultValue={business.description || ""}
-                className="w-full px-3 py-2 border rounded-md"
-                placeholder="Tell customers about your business..."
-              />
+              <Textarea name="description" rows={4} defaultValue={business.description || ""} placeholder="Tell customers about your business..." />
             </div>
 
             <div className="grid md:grid-cols-2 gap-4">
@@ -306,13 +319,13 @@ export default function Settings() {
                   <MapPin className="h-4 w-4" />
                   Location
                 </label>
-                <input
-                  type="text"
-                  name="location"
-                  defaultValue={business.location || ""}
-                  className="w-full px-3 py-2 border rounded-md"
-                  placeholder="Kalispell, MT"
-                />
+                  <Input
+                    type="text"
+                    name="location"
+                    defaultValue={business.location || ""}
+                    className="w-full"
+                    placeholder="Kalispell, MT"
+                  />
               </div>
 
               <div>
@@ -320,11 +333,11 @@ export default function Settings() {
                   <Phone className="h-4 w-4" />
                   Phone
                 </label>
-                <input
+                <Input
                   type="tel"
                   name="phone"
                   defaultValue={business.phone || ""}
-                  className="w-full px-3 py-2 border rounded-md"
+                  className="w-full"
                   placeholder="(406) 555-0123"
                 />
               </div>
@@ -332,11 +345,11 @@ export default function Settings() {
 
             <div>
               <label className="block text-sm font-medium mb-2">Full Address</label>
-              <input
+              <Input
                 type="text"
                 name="address"
                 defaultValue={business.address || ""}
-                className="w-full px-3 py-2 border rounded-md"
+                className="w-full"
                 placeholder="123 Main St, Kalispell, MT 59901"
               />
             </div>
@@ -347,11 +360,11 @@ export default function Settings() {
                   <Mail className="h-4 w-4" />
                   Email
                 </label>
-                <input
+                <Input
                   type="email"
                   name="email"
                   defaultValue={business.email || ""}
-                  className="w-full px-3 py-2 border rounded-md"
+                  className="w-full"
                   placeholder="contact@yourbusiness.com"
                 />
               </div>
@@ -361,11 +374,11 @@ export default function Settings() {
                   <Globe className="h-4 w-4" />
                   Website
                 </label>
-                <input
+                <Input
                   type="url"
                   name="website"
                   defaultValue={business.website || ""}
-                  className="w-full px-3 py-2 border rounded-md"
+                  className="w-full"
                   placeholder="https://yourbusiness.com"
                 />
               </div>
@@ -373,11 +386,11 @@ export default function Settings() {
 
             <div>
               <label className="block text-sm font-medium mb-2">Vercel API Token (Optional)</label>
-              <input
+              <Input
                 type="password"
                 name="vercelToken"
                 defaultValue={business.vercelToken || ""}
-                className="w-full px-3 py-2 border rounded-md font-mono text-sm"
+                className="w-full font-mono text-sm"
                 placeholder="vercel_xxxxxxxxxxxxxxxxxxxxx"
               />
               <p className="text-xs text-muted-foreground mt-1">
@@ -425,11 +438,11 @@ export default function Settings() {
                     className="h-12 w-20 rounded border cursor-pointer"
                   />
                   <div className="flex-1">
-                    <input
+                    <Input
                       type="text"
                       value={primaryColor}
                       onChange={(e) => setPrimaryColor(e.target.value)}
-                      className="w-full px-3 py-2 border rounded-md font-mono text-sm"
+                      className="w-full font-mono text-sm"
                       placeholder="#2563eb"
                       pattern="^#[0-9A-Fa-f]{6}$"
                     />
@@ -450,11 +463,11 @@ export default function Settings() {
                     className="h-12 w-20 rounded border cursor-pointer"
                   />
                   <div className="flex-1">
-                    <input
+                    <Input
                       type="text"
                       value={secondaryColor}
                       onChange={(e) => setSecondaryColor(e.target.value)}
-                      className="w-full px-3 py-2 border rounded-md font-mono text-sm"
+                      className="w-full font-mono text-sm"
                       placeholder="#1e40af"
                       pattern="^#[0-9A-Fa-f]{6}$"
                     />
@@ -545,7 +558,13 @@ export default function Settings() {
                   Status: <span className="capitalize">{business.subscriptionStatus}</span>
                 </p>
               </div>
-              <Button variant="outline" onClick={() => window.location.href = '/subscription'}>
+              <Button variant="outline" onClick={() => {
+                try {
+                  router.push('/subscription');
+                } catch (e) {
+                  if (typeof window !== 'undefined') window.location.href = '/subscription';
+                }
+              }}>
                 Upgrade Plan
               </Button>
             </div>

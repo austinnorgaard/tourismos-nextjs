@@ -4,12 +4,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 // const values intentionally unused in this UI file
 import { Mountain } from "lucide-react";
 import { useState, useEffect } from "react";
+import { Input } from "@/components/ui/input";
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { toast } from "sonner";
 
 export default function Auth() {
   const [isLogin, setIsLogin] = useState(true);
   const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
   // Check for OAuth errors in URL (client-side only)
   useEffect(() => {
@@ -53,7 +56,7 @@ export default function Auth() {
       if (response.ok) {
         toast.success(isLogin ? "Logged in successfully!" : "Account created successfully!");
         // Reload to update auth state
-        window.location.href = "/";
+        router.push('/');
       } else {
         toast.error(data.error || "Authentication failed");
       }
@@ -66,7 +69,7 @@ export default function Auth() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-green-50 p-4">
+  <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-blue-50 to-white p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="flex justify-center mb-4">
@@ -85,10 +88,10 @@ export default function Auth() {
             {!isLogin && (
               <div>
                 <label className="block text-sm font-medium mb-2">Full Name</label>
-                <input
+                <Input
                   type="text"
                   name="name"
-                  className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="w-full"
                   placeholder="John Doe"
                 />
               </div>
@@ -97,10 +100,10 @@ export default function Auth() {
             {!isLogin && (
               <div>
                 <label className="block text-sm font-medium mb-2">Username (optional)</label>
-                <input
+                <Input
                   type="text"
                   name="username"
-                  className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="w-full"
                   placeholder="johndoe"
                   minLength={3}
                 />
@@ -110,11 +113,11 @@ export default function Auth() {
 
             <div>
               <label className="block text-sm font-medium mb-2">{isLogin ? "Email or Username" : "Email"}</label>
-              <input
+              <Input
                 type={isLogin ? "text" : "email"}
                 name="email"
                 required
-                className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                className="w-full"
                 placeholder={isLogin ? "you@example.com or username" : "you@example.com"}
               />
             </div>
@@ -128,12 +131,12 @@ export default function Auth() {
                   </Link>
                 )}
               </div>
-              <input
+              <Input
                 type="password"
                 name="password"
                 required
                 minLength={8}
-                className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                className="w-full"
                 placeholder="••••••••"
               />
               {!isLogin && (
@@ -159,7 +162,7 @@ export default function Auth() {
             <Button
               type="button"
               variant="outline"
-              onClick={() => (window.location.href = "/api/auth/google")}
+              onClick={() => router.push('/api/auth/google')}
               className="w-full"
             >
               <svg className="h-5 w-5" viewBox="0 0 24 24">
@@ -172,7 +175,7 @@ export default function Auth() {
             <Button
               type="button"
               variant="outline"
-              onClick={() => (window.location.href = "/api/auth/microsoft")}
+              onClick={() => router.push('/api/auth/microsoft')}
               className="w-full"
             >
               <svg className="h-5 w-5" viewBox="0 0 23 23">
@@ -195,13 +198,14 @@ export default function Auth() {
                 </Link>
               </div>
             )}
-            <button
+            <Button
               type="button"
+              variant="link"
               onClick={() => setIsLogin(!isLogin)}
-              className="text-sm text-primary hover:underline"
+              className="text-sm"
             >
               {isLogin ? "Don't have an account? Sign up" : "Already have an account? Sign in"}
-            </button>
+            </Button>
           </div>
         </CardContent>
       </Card>

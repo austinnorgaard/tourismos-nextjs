@@ -1,10 +1,14 @@
+"use client";
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { trpc } from "@/lib/trpc";
 import { CheckCircle2, AlertCircle, ExternalLink, Unplug } from "lucide-react";
 import { toast } from "sonner";
+import { useRouter } from 'next/navigation';
 
 export function StripeConnectCard() {
+  const router = useRouter();
   const { data: status, isLoading } = trpc.payment.getConnectAccountStatus.useQuery();
   const utils = trpc.useUtils();
 
@@ -13,6 +17,16 @@ export function StripeConnectCard() {
       // After creating account, get the onboarding link
       const linkResult = await utils.client.payment.createConnectAccountLink.mutate();
       if (linkResult.url) {
+        // If the link is same-origin, use router.push to preserve SPA behavior; otherwise do full navigation
+        try {
+          const u = new URL(linkResult.url);
+          if (u.origin === window.location.origin) {
+            router.push(u.pathname + u.search + u.hash);
+            return;
+          }
+        } catch (e) {
+          // ignore URL parse errors
+        }
         window.location.href = linkResult.url;
       }
     },
@@ -24,6 +38,13 @@ export function StripeConnectCard() {
   const createLinkMutation = trpc.payment.createConnectAccountLink.useMutation({
     onSuccess: (data) => {
       if (data.url) {
+        try {
+          const u = new URL(data.url);
+          if (u.origin === window.location.origin) {
+            router.push(u.pathname + u.search + u.hash);
+            return;
+          }
+        } catch (e) {}
         window.location.href = data.url;
       }
     },

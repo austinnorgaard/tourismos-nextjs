@@ -1,0 +1,3 @@
+# Ignore Tailwind-generated and global CSS files that use PostCSS/Tailwind directives
+app/globals.css
+**/globals*.css

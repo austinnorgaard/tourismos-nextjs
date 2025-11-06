@@ -21,9 +21,9 @@ import {
 } from "@/components/ui/sidebar";
 import { APP_TITLE } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
+"use client";
 import { LayoutDashboard, LogOut, PanelLeft, Users, Calendar, Package, Bot, Mail, BarChart3, Settings, Mountain, Globe, Crown, Plug } from "lucide-react";
 import { NotificationCenter } from "./NotificationCenter";
-"use client";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { usePathname, useRouter } from 'next/navigation';
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';

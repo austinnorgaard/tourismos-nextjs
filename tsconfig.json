@@ -25,6 +25,15 @@
     "paths": {
       "@/*": [
         "./*"
+      ],
+      "@shared/*": [
+        "shared/*"
+      ],
+      "server/*": [
+        "server/*"
+      ],
+      "server": [
+        "server"
       ]
     },
     "strictNullChecks": true
